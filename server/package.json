@@ -1,0 +1,16 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "author": "Ephox Corporation DBA Tiny Technologies, Inc.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "debug": "^2.6.9",
+    "express": "^4.18.0",
+    "morgan": "^1.10.0"
+  }
+}
