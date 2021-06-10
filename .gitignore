@@ -25,5 +25,12 @@
 
 # server files
 
+# config
+/server/.env
+/server/rsa-key*
+
 # dependencies
 /server/node_modules
+
+# database
+/server/dev.sqlite3

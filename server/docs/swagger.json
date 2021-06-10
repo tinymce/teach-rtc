@@ -1,0 +1,847 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Teach RTC",
+    "description": "A sample application showing multi-user editing.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "components": {
+    "responses": {
+      "MissingUserPass": {
+        "description": "Username or password missing.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Both username and password are required."
+                }
+              }
+            }
+          }
+        }
+      },
+      "IncorrectPassword": {
+        "description": "Username or password incorrect.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Incorrect username or password."
+                }
+              }
+            }
+          }
+        }
+      },
+      "UsernameConflict": {
+        "description": "Username is already in use.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "A user already exists with that username."
+                }
+              }
+            }
+          }
+        }
+      },
+      "MissingTitle": {
+        "description": "Title missing.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "The title is required."
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotAuthorized": {
+        "description": "Not authorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Not authorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ForbiddenOrMissing": {
+        "description": "User is not permitted to access this document in this way (or it doesn't exist).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Document either does not exist or the user does not have the permission required."
+                }
+              }
+            }
+          }
+        }
+      },
+      "AcquireLock": {
+        "description": "User must acquire a lock on the document.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "User must acquire a lock on the document."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "example": "john.smith"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 1,
+            "example": "correct horse battery staple"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "paths": {
+    "/jwt": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate and create a JWT bearer token.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "JWT token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNjIyMDg2MjM1LCJleHAiOjE2MjIxNzI2MzUsInN1YiI6ImpvaG4uc21pdGgifQ.35RdwQCjR6xnGah0yIgXhy1qS3HXpZSJlgCpKz8Q1Ho"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingUserPass"
+          },
+          "401": {
+            "$ref": "#/components/responses/IncorrectPassword"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List all the users.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "example": "john.smith"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create a new user.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingUserPass"
+          },
+          "409": {
+            "$ref": "#/components/responses/UsernameConflict"
+          }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "List all the documents that can be seen by the current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Create a new document.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "My document"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "uuid": {
+                      "type": "string",
+                      "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MissingTitle"
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/lock": {
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Acquire or release a lock on the document.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "release": {
+                    "type": "boolean",
+                    "example": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "release": {
+                      "type": "boolean",
+                      "example": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          }
+        }
+      }
+    }, 
+    "/documents/{documentUuid}/title": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get document title.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "My document"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Save document title.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "A new title"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          },
+          "423": {
+            "$ref": "#/components/responses/AcquireLock"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/content": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get document content.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "content": {
+                      "type": "string",
+                      "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Save document content.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          },
+          "423": {
+            "$ref": "#/components/responses/AcquireLock"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/collaborators": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get all collaborators and their permissions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "collaborators": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "type": "string",
+                            "example": "john.smith"
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": ["manage", "edit", "view", "none", "other"],
+                            "example": "manage"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/collaborators/{username}": {
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Change collaborator permissions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Document universally unique identifier",
+            "in": "path",
+            "name": "documentUuid",
+            "schema": {
+              "type": "string",
+              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+            },
+            "required": true
+          },
+          {
+            "description": "User name",
+            "in": "path",
+            "name": "username",
+            "schema": {
+              "type": "string",
+              "example": "john.smith"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": ["manage", "edit", "view", "none"],
+                    "example": "edit"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NotAuthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenOrMissing"
+          }
+        }
+      }
+    }
+  }
+}
