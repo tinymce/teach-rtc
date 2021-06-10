@@ -10,13 +10,13 @@ exports.up = function(knex) {
     table.uuid('uuid').notNullable().unique().primary();
     table.string('title').notNullable();
     table.string('content').notNullable().defaultTo('');
-    table.integer('lock_user');
+    table.string('lock_user');
     table.datetime('lock_time');
     table.foreign('lock_user').references('users.username').onDelete('CASCADE').onUpdate('RESTRICT');
   })
   .createTable('collaborators', table => {
-    table.integer('document').notNullable();
-    table.integer('user').notNullable();
+    table.string('document').notNullable();
+    table.string('user').notNullable();
     // bitset
     // 4 = may change collaborators
     // 2 = may write
