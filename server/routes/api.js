@@ -194,17 +194,6 @@ router.get('/documents/:documentUuid/title', isAuthenticated, hasReadPermission,
   res.json({ success: true, title });
 });
 
-// store document title
-router.put('/documents/:documentUuid/title', isAuthenticated, hasWritePermission, hasLock, async function (req, res, next) {
-  const title = req.body.title;
-  if (typeof title !== 'string') {
-    res.status(400).json({ success: false, message: 'The title is required.' });
-    return;
-  }
-  await req.db('documents').where('uuid', req.params.documentUuid).update({ title });
-  res.status(200).json({ success: true });
-});
-
 // get document content
 router.get('/documents/:documentUuid/content', isAuthenticated, hasReadPermission, async function (req, res, next) {
   const [{ content }] = await req.db.select('content').from('documents').where('uuid', req.params.documentUuid);
