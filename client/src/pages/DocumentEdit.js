@@ -153,9 +153,8 @@ const useDocumentAutosave = (documentId, canSave, initialValue) => {
 const config = {
   height: 800,
   plugins: [
-    'advlist autolink lists link image charmap print preview anchor',
-    'searchreplace visualblocks code fullscreen',
-    'insertdatetime media table paste code help wordcount'
+    'advlist lists link image charmap print visualblocks',
+    'insertdatetime help wordcount'
   ],
   menubar: false,
   toolbar: 'undo redo | formatselect | ' +
