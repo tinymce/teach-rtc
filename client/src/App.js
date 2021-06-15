@@ -8,6 +8,7 @@ import DocumentEdit from './pages/DocumentEdit';
 import LoginRegister from './pages/LoginRegister';
 import Logout from './pages/Logout';
 import Navigation from './components/Navigation';
+import axios from 'axios';
 
 const useToken = () => {
   const [token, setToken] = useState(localStorage.getItem('jwt'));
