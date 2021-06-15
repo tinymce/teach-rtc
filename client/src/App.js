@@ -10,23 +10,31 @@ import Logout from './pages/Logout';
 import Navigation from './components/Navigation';
 import axios from 'axios';
 
+const setGlobalTokenState = (token) => {
+  if (token) {
+    localStorage.setItem('jwt', token);
+    axios.defaults.headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    localStorage.removeItem('jwt');
+    delete axios.defaults.headers['Authorization'];
+  }
+  return token;
+};
+
 const useToken = () => {
-  const [token, setToken] = useState(localStorage.getItem('jwt'));
+  const [token, setTokenState] = useState(() => setGlobalTokenState(localStorage.getItem('jwt')));
+  const setToken = (token) => setTokenState(setGlobalTokenState(token));
   useEffect(() => {
-    if (token !== null && token !== undefined) {
-      localStorage.setItem('jwt', token);
-      axios.defaults.headers['Authorization'] = `Bearer ${token}`;
+    if (token) {
       // calculate when the token will expire and setup a timer to automatically clear it
       const { exp } = decode(token);
       const expiryDelay = Math.max(0, (exp * 1000) - Date.now());
       const expiryTimer = setTimeout(() => setToken(null), expiryDelay);
       // setup a cleanup function to remove the token expiry timer if we logout or login again
       return () => clearTimeout(expiryTimer);
-    } else {
-      localStorage.removeItem('jwt');
-      delete axios.defaults.headers['Authorization'];
     }
   }, [token]);
+
   return [token, setToken];
 };
 
