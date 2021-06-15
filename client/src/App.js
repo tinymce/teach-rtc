@@ -53,7 +53,7 @@ function App() {
           <Switch>
             <Route path="/logout"><Logout setToken={setToken} /></Route>
             <Route path="/login"><LoginRegister setToken={setToken} /></Route>
-            <Route path="/documents/:documentUuid">{token ? <DocumentEdit token={token} /> : <Redirect to="/login" />}</Route>
+            <Route path="/documents/:documentId">{token ? <DocumentEdit token={token} /> : <Redirect to="/login" />}</Route>
             <Route path="/documents">{token ? <DocumentList token={token} /> : <Redirect to="/login" />}</Route>
             <Route path="/">{token ? <Redirect to="/documents" /> : <Redirect to="/login" />}</Route>
           </Switch>
