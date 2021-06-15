@@ -14,6 +14,7 @@ const useToken = () => {
   useEffect(() => {
     if (token !== null && token !== undefined) {
       localStorage.setItem('jwt', token);
+      axios.defaults.headers['Authorization'] = `Bearer ${token}`;
       // calculate when the token will expire and setup a timer to automatically clear it
       const { exp } = decode(token);
       const expiryDelay = Math.max(0, (exp * 1000) - Date.now());
@@ -21,7 +22,8 @@ const useToken = () => {
       // setup a cleanup function to remove the token expiry timer if we logout or login again
       return () => clearTimeout(expiryTimer);
     } else {
-      localStorage.removeItem('jwt')
+      localStorage.removeItem('jwt');
+      delete axios.defaults.headers['Authorization'];
     }
   }, [token]);
   return [token, setToken];
