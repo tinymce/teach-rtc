@@ -12,11 +12,11 @@ const useDocumentLock = (token, documentUuid) => {
   const [ownsLock, setOwnsLock] = useState(false);
   useEffect(() => {
     const requestLock = async () => {
-      const { data: lock } = await axios.put(`/documents/${documentUuid}/lock`, {}, { headers: { 'Authorization': `Bearer ${token}` } });
+      const { data: lock } = await axios.put(`/documents/${documentUuid}/lock`, {});
       setOwnsLock(lock.success);
     };
     const releaseLock = () => {
-      axios.put(`/documents/${documentUuid}/lock`, { release: true }, { headers: { 'Authorization': `Bearer ${token}` } });
+      axios.put(`/documents/${documentUuid}/lock`, { release: true });
     };
     if (!ownsLock) {
       // attempt to acquire lock every second until we succeed
@@ -38,11 +38,19 @@ const useDocumentLock = (token, documentUuid) => {
   return ownsLock;
 };
 
-const useDocumentInitialValue = (token, documentUuid, ownsLock) => {
+const useDocumentTitle = (documentUuid) => {
+  const [title, setTitle] = useState('');
+  useEffect(() => {
+    axios.get(`/documents/${documentUuid}/title`).then(({ data }) => setTitle(data.title));
+  }, [documentUuid]);
+  return title;
+};
+
+const useDocumentInitialValue = (documentUuid, ownsLock) => {
   const [initialValue, setInitialValue] = useState('');
   useEffect(() => {
     const requestContent = async () => {
-      const { data: resp } = await axios.get(`/documents/${documentUuid}/content`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const { data: resp } = await axios.get(`/documents/${documentUuid}/content`);
       if (resp.success) {
         setInitialValue(resp.content);
       }
@@ -56,12 +64,12 @@ const useDocumentInitialValue = (token, documentUuid, ownsLock) => {
       // once we acquire the lock get the content once to ensure we have the latest value
       requestContent();
     }
-  }, [token, documentUuid, ownsLock]);
+  }, [documentUuid, ownsLock]);
   // return the initial value
   return initialValue;
 };
 
-const useDocumentAutosave = (token, documentUuid, ownsLock, initialValue) => {
+const useDocumentAutosave = (documentUuid, ownsLock, initialValue) => {
   // reference to TinyMCE that must be set by the user of this hook
   const editorRef = useRef();
   // the initial value came from the server so when it changes 
@@ -81,8 +89,7 @@ const useDocumentAutosave = (token, documentUuid, ownsLock, initialValue) => {
             // save the content to the server
             axios.put(
               `/documents/${documentUuid}/content`,
-              { content },
-              { headers: { 'Authorization': `Bearer ${token}` } }
+              { content }
             ).then(({ data }) => {
               // update the saved content when the save is confirmed
               if (data.success) {
@@ -94,7 +101,7 @@ const useDocumentAutosave = (token, documentUuid, ownsLock, initialValue) => {
       }, AUTOSAVE_TIME);
       return () => clearInterval(timer);
     }
-  }, [token, documentUuid, ownsLock, savedContent]);
+  }, [documentUuid, ownsLock, savedContent]);
   // save on navigation
   const history = useHistory();
   useEffect(() => {
@@ -106,11 +113,7 @@ const useDocumentAutosave = (token, documentUuid, ownsLock, initialValue) => {
         const content = editorRef.current.getContent();
         if (content !== savedContent) {
           // save the content to the server
-          axios.put(
-            `/documents/${documentUuid}/content`,
-            { content },
-            { headers: { 'Authorization': `Bearer ${token}` } }
-          );
+          axios.put(`/documents/${documentUuid}/content`, { content });
         }
       }
       // safe to continue navigation now
@@ -126,13 +129,9 @@ const useDocumentAutosave = (token, documentUuid, ownsLock, initialValue) => {
 export default function DocumentEdit({ token }) {
   const { documentUuid } = useParams();
   const ownsLock = useDocumentLock(token, documentUuid);
-  const [title, setTitle] = useState('');
-  useEffect(() => {
-    axios.get(`/documents/${documentUuid}/title`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(({ data }) => setTitle(data.title));
-  }, [documentUuid, token]);
-  const initialValue = useDocumentInitialValue(token, documentUuid, ownsLock);
-  const editorRef = useDocumentAutosave(token, documentUuid, ownsLock, initialValue, AUTOSAVE_TIME);
+  const title = useDocumentTitle(documentUuid);
+  const initialValue = useDocumentInitialValue(documentUuid, ownsLock);
+  const editorRef = useDocumentAutosave(documentUuid, ownsLock, initialValue);
 
   return (
     <>

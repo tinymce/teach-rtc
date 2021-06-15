@@ -33,44 +33,44 @@ const Collaborator = ({ username, role, onEdit }) => {
   );
 };
 
-const useTitle = (token, uuid) => {
+const useTitle = (uuid) => {
   const [title, setTitle] = useState('');
   useEffect(() => {
-    axios.get(`/documents/${uuid}/title`, { headers: { 'Authorization': `Bearer ${token}` } })
+    axios.get(`/documents/${uuid}/title`)
       .then(({ data }) => setTitle(data.title));
-  }, [uuid, token]);
+  }, [uuid]);
   return title;
 };
 
-const useCollaborators = (token, uuid) => {
+const useCollaborators = (uuid) => {
   const [tick, setTick] = useState(0);
   const [collaborators, setCollaborators] = useState([]);
   useEffect(() => {
-    axios.get(`/documents/${uuid}/collaborators`, { headers: { 'Authorization': `Bearer ${token}` } })
+    axios.get(`/documents/${uuid}/collaborators`)
       .then(({ data }) => setCollaborators(data.collaborators));
-  }, [uuid, token, tick]);
+  }, [uuid, tick]);
   const requestCollaborators = () => setTick((prev) => prev + 1);
   return { collaborators, requestCollaborators };
 };
 
-const usePossibleCollaborators = (token, collaborators, needed) => {
+const usePossibleCollaborators = (collaborators, needed) => {
   const [users, setUsers] = useState([]);
   useEffect(() => {
     if (needed) {
-      axios.get('/users', { headers: { 'Authorization': `Bearer ${token}` } }).then(({ data }) => {
+      axios.get('/users').then(({ data }) => {
         if (data.success) {
           const userLookup = Object.fromEntries(collaborators.map((c) => [c.username, true]));
           setUsers(data.users.filter((user) => !userLookup[user]));
         }
       });
     }
-  }, [token, collaborators, needed]);
+  }, [collaborators, needed]);
   return users;
 };
 
-const Doc = ({ uuid, token, username }) => {
-  const title = useTitle(token, uuid);
-  const { collaborators, requestCollaborators } = useCollaborators(token, uuid);
+const Doc = ({ uuid, username }) => {
+  const title = useTitle(uuid);
+  const { collaborators, requestCollaborators } = useCollaborators(uuid);
   // find our role
   const role = (collaborators.find((c) => c.username === username) ?? { username, role: 'none' }).role;
   const isManager = role === 'manage';
@@ -79,13 +79,12 @@ const Doc = ({ uuid, token, username }) => {
   // modal data
   const [addCollaborator, setAddCollaborator] = useState(false);
   const [editCollaborator, setEditCollaborator] = useState(undefined);
-  const users = usePossibleCollaborators(token, collaborators, addCollaborator);
+  const users = usePossibleCollaborators(collaborators, addCollaborator);
   // update the collaborators
   const updateCollaborators = (username, role) => {
     axios.put(
       `/documents/${uuid}/collaborators/${username}`,
-      { role },
-      { headers: { 'Authorization': `Bearer ${token}` } }
+      { role }
     ).then(({ data }) => {
       if (data.success) requestCollaborators();
     });
@@ -116,7 +115,7 @@ export default function DocumentList({ token }) {
   const [documents, setDocuments] = useState([]);
   useEffect(() => {
     const update = () => {
-      axios.get('/documents', { headers: { 'Authorization': `Bearer ${token}` } })
+      axios.get('/documents')
         .then(({ data }) => setDocuments(data.documents ?? []));
     };
     update();
@@ -129,7 +128,7 @@ export default function DocumentList({ token }) {
   const cancelNewDocument = () => setAddDocument(false);
 
   const addNewDocument = (title) => {
-    axios.post('/documents', { title }, { headers: { 'Authorization': `Bearer ${token}` } })
+    axios.post('/documents', { title })
       .then(({ data }) => setDocuments((documents) => [...documents, data.uuid]));
     setAddDocument(false);
   };
@@ -147,7 +146,7 @@ export default function DocumentList({ token }) {
         </thead>
         <tbody>
           {
-            documents.map((docUuid) => <Doc key={docUuid} uuid={docUuid} token={token} username={sub} />)
+            documents.map((docUuid) => <Doc key={docUuid} uuid={docUuid} username={sub} />)
           }
         </tbody>
       </Table>
