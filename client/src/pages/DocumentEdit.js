@@ -150,6 +150,20 @@ const useDocumentAutosave = (documentId, canSave, initialValue) => {
   return editorRef;
 };
 
+const config = {
+  height: 800,
+  plugins: [
+    'advlist autolink lists link image charmap print preview anchor',
+    'searchreplace visualblocks code fullscreen',
+    'insertdatetime media table paste code help wordcount'
+  ],
+  menubar: false,
+  toolbar: 'undo redo | formatselect | ' +
+    'bold italic backcolor | alignleft aligncenter ' +
+    'alignright alignjustify | bullist numlist outdent indent | ' +
+    'removeformat | help',
+};
+
 export default function DocumentEdit({ token }) {
   const { documentId } = useParams();
   const title = useDocumentTitle(documentId);
@@ -170,9 +184,7 @@ export default function DocumentEdit({ token }) {
         initialValue={initialValue}
         onInit={(_evt, editor) => { editorRef.current = editor; }}
         onRemove={() => { editorRef.current = undefined; }}
-        init={{
-          height: 800
-        }}
+        init={config}
       />
     </>
   );
