@@ -11,162 +11,483 @@
     }
   ],
   "components": {
+    "parameters": {
+      "DocumentUuid": {
+        "description": "Document universally unique identifier",
+        "in": "path",
+        "name": "documentUuid",
+        "schema": {
+          "$ref": "#/components/schemas/DocumentUuid"
+        },
+        "required": true
+      },
+      "Username": {
+        "description": "User name",
+        "in": "path",
+        "name": "username",
+        "schema": {
+          "$ref":"#/components/schemas/Username"
+        },
+        "required": true
+      }
+    },
     "responses": {
-      "MissingUserPass": {
-        "description": "Username or password missing.",
+      "LoginSuccess": {
+        "description": "Successfully created JWT.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "Both username and password are required."
-                }
-              }
+              "$ref": "#/components/schemas/LoginResp"
             }
           }
         }
       },
-      "IncorrectPassword": {
+      "LoginValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidPassword"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "LoginFailure": {
         "description": "Username or password incorrect.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "Incorrect username or password."
-                }
-              }
+              "$ref": "#/components/schemas/LoginFailure"
             }
           }
         }
       },
-      "UsernameConflict": {
+      "ListUsersSuccess": {
+        "description": "Successfully got the list of users.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ListUsersResp"
+            }
+          }
+        }
+      },
+      "CreateUserSuccess": {
+        "description": "Successfully created a user.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateUserResp"
+            }
+          }
+        }
+      },
+      "CreateUserValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidPassword"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidFullName"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "CreateUserConflict": {
         "description": "Username is already in use.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "A user already exists with that username."
-                }
-              }
+              "$ref": "#/components/schemas/CreateUserConflict"
             }
           }
         }
       },
-      "MissingTitle": {
-        "description": "Title missing.",
+      "ListDocumentsSuccess": {
+        "description": "Successfully listed documents.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "The title is required."
-                }
-              }
+              "$ref": "#/components/schemas/ListDocumentsResp"
             }
           }
         }
       },
-      "NotAuthorized": {
-        "description": "Not authorized",
+      "CreateDocumentSuccess": {
+        "description": "Successfully created a new document.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "Not authorized"
-                }
-              }
+              "$ref": "#/components/schemas/CreateDocumentResp"
             }
           }
         }
       },
-      "ForbiddenOrMissing": {
+      "CreateDocumentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidTitle"
+            }
+          }
+        }
+      },
+      "LockDocumentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LockDocumentResp"
+            }
+          }
+        }
+      },
+      "LockDocumentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidRelease"
+            }
+          }
+        }
+      },
+      "GetDocumentTitleSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentTitleResp"
+            }
+          }
+        }
+      },
+      "GetDocumentContentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentContentResp"
+            }
+          }
+        }
+      },
+      "UpdateDocumentContentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateDocumentContentResp"
+            }
+          }
+        }
+      },
+      "UpdateDocumentContentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidContent"
+            }
+          }
+        }
+      },
+      "GetCollaboratorsSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetCollaboratorsResp"
+            }
+          }
+        }
+      },
+      "SetRoleSuccess": {
+        "description": "Successfully set the role.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetRoleResp"
+            }
+          }
+        }
+      },
+      "SetRoleValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf":[
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidRole"
+                },
+                {
+                  "$ref": "#/components/schemas/UserUnknown"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "AuthorizationCheckFailed": {
+        "description": "The authorization check failed due to a missing or invalid JWT bearer token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorizationCheckFailed"
+            }
+          }
+        }
+      },
+      "DocumentUnknownOrForbidden": {
         "description": "User is not permitted to access this document in this way (or it doesn't exist).",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "Document either does not exist or the user does not have the permission required."
-                }
-              }
+              "$ref": "#/components/schemas/DocumentUnknownOrForbidden"
             }
           }
         }
       },
-      "AcquireLock": {
+      "DocumentLockRequired": {
         "description": "User must acquire a lock on the document.",
         "content": {
           "application/json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "success": {
-                  "type": "boolean",
-                  "example": false
-                },
-                "message": {
-                  "type": "string",
-                  "example": "User must acquire a lock on the document."
-                }
-              }
+              "$ref": "#/components/schemas/DocumentLockRequired"
             }
           }
         }
       }
     },
     "schemas": {
-      "Registration": {
+      "Username": {
+        "type": "string",
+        "minLength": 1,
+        "example": "john.smith"
+      },
+      "Password": {
+        "type": "string",
+        "format": "password",
+        "minLength": 1,
+        "example": "correct horse battery staple"
+      },
+      "FullName": {
+        "type": "string",
+        "minLength": 1,
+        "example": "John Smith"
+      },
+      "DocumentUuid": {
+        "type": "string",
+        "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "manage",
+          "edit",
+          "view",
+          "none"
+        ],
+        "example": "manage"
+      },
+      "Collaborator": {
         "type": "object",
         "properties": {
           "username": {
+            "$ref": "#/components/schemas/Username"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        }
+      },
+      "JWT": {
+        "type": "string",
+        "description": "JWT token",
+        "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjM5OTg1MzksImV4cCI6MTYyNDA4NDkzOSwic3ViIjoiam9obi5zbWl0aCJ9.QImDfhGwmH79UU6je7UHzMSLzXZcDml1shCWGZuj0Ovqxv6Y0YZUpj2QNlhzLnBlQq3WMYZe1CZxgSaSq2VSEA9P22iUoOn9THzw9NJnfodEj-MyKvoP8tL2nZmW5SMSttpWVZbwun0JTq4bps0-GcH6hd9FzXUgw_YirQdMEZTYqT3Fmg2pHIt7sJsKCwx2oT2E0yiGCfH8rXDyF7HziVUcJiVNOeNA8Vxz8PMIIGGTQrlgDjRQj_WJcOxypz9HSsaxCwrsZtIp_vBEvsEe_CYEHLQ3riKTitRvUqc4LmkUrW7hGgkzo-y6E8BaTSAQ9pSJ2vW63j6FF70TPRzxZg"
+      },
+      "InvalidUsername": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
             "type": "string",
-            "minLength": 1,
-            "example": "john.smith"
+            "example": "The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ ."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidPassword": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The password property must be a non-empty string."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidFullName": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The fullName property must be a non-empty string."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidTitle": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The title is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidRelease": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The release option must be true or false if provided."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidContent": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The content is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidRole": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The role must be one of: \"manage\", \"edit\", \"view\", \"none\"."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorizationCheckFailed": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Not authorized"
+          }
+        }
+      },
+      "DocumentUnknownOrForbidden": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Document either does not exist or the user does not have the permission required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentLockRequired": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "User must acquire a lock on the document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserUnknown": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The username does not refer to a user that exists."
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginReq": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "$ref": "#/components/schemas/Username"
           },
           "password": {
-            "type": "string",
-            "format": "password",
-            "minLength": 1,
-            "example": "correct horse battery staple"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "required": [
@@ -174,6 +495,225 @@
           "password"
         ],
         "additionalProperties": false
+      },
+      "LoginResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "token": {
+            "$ref": "#/components/schemas/JWT"
+          }
+        }
+      },
+      "LoginFailure": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Incorrect username or password."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListUsersResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Username"
+            }
+          }
+        }
+      },
+      "CreateUserReq": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "$ref": "#/components/schemas/Username"
+          },
+          "password": {
+            "$ref": "#/components/schemas/Password"
+          },
+          "fullName": {
+            "$ref": "#/components/schemas/FullName"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "fullName"
+        ],
+        "additionalProperties": false
+      },
+      "CreateUserResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CreateUserConflict": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "A user already exists with that username."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListDocumentsResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentUuid"
+            }
+          }
+        }
+      },
+      "CreateDocumentReq": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "example": "My document"
+          }
+        }
+      },
+      "CreateDocumentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "uuid": {
+            "$ref": "#/components/schemas/DocumentUuid"
+          }
+        }
+      },
+      "LockDocumentReq": {
+        "type": "object",
+        "properties": {
+          "release": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "LockDocumentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "release": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "GetDocumentTitleResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "title": {
+            "type": "string",
+            "example": "My document"
+          }
+        }
+      },
+      "GetDocumentContentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "content": {
+            "type": "string",
+            "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          }
+        }
+      },
+      "UpdateDocumentContentReq": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          }
+        }
+      },
+      "UpdateDocumentContentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "GetCollaboratorsResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "collaborators": {
+            "type": "array",
+            "items": {
+              "$ref":"#/components/schemas/Collaborator"
+            }
+          }
+        }
+      },
+      "SetRoleReq": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        }
+      },
+      "SetRoleResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -194,38 +734,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Registration"
+                "$ref": "#/components/schemas/LoginReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "token": {
-                      "type": "string",
-                      "description": "JWT token",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNjIyMDg2MjM1LCJleHAiOjE2MjIxNzI2MzUsInN1YiI6ImpvaG4uc21pdGgifQ.35RdwQCjR6xnGah0yIgXhy1qS3HXpZSJlgCpKz8Q1Ho"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/LoginSuccess"
           },
           "400": {
-            "$ref": "#/components/responses/MissingUserPass"
+            "$ref": "#/components/responses/LoginValidation"
           },
           "401": {
-            "$ref": "#/components/responses/IncorrectPassword"
+            "$ref": "#/components/responses/LoginFailure"
           }
         }
       }
@@ -238,27 +760,7 @@
         "summary": "List all the users.",
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "users": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "example": "john.smith"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/ListUsersSuccess"
           }
         }
       },
@@ -271,33 +773,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Registration"
+                "$ref": "#/components/schemas/CreateUserReq"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/CreateUserSuccess"
           },
           "400": {
-            "$ref": "#/components/responses/MissingUserPass"
+            "$ref": "#/components/responses/CreateUserValidation"
           },
           "409": {
-            "$ref": "#/components/responses/UsernameConflict"
+            "$ref": "#/components/responses/CreateUserConflict"
           }
         }
       }
@@ -315,30 +804,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "documents": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/ListDocumentsSuccess"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           }
         }
       },
@@ -356,44 +825,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "example": "My document"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateDocumentReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "uuid": {
-                      "type": "string",
-                      "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/CreateDocumentSuccess"
           },
           "400": {
-            "$ref": "#/components/responses/MissingTitle"
+            "$ref": "#/components/responses/CreateDocumentValidation"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           }
         }
       }
@@ -411,61 +856,34 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "release": {
-                    "type": "boolean",
-                    "example": false
-                  }
-                }
+                "$ref":"#/components/schemas/LockDocumentReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "release": {
-                      "type": "boolean",
-                      "example": false
-                    }
-                  }
-                }
-              }
-            }
+            "$ref":"#/components/responses/LockDocumentSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/LockDocumentValidation"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       }
-    }, 
+    },
     "/documents/{documentUuid}/title": {
       "get": {
         "tags": [
@@ -479,42 +897,18 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "title": {
-                      "type": "string",
-                      "example": "My document"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/GetDocumentTitleSuccess"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       }
@@ -532,42 +926,18 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "content": {
-                      "type": "string",
-                      "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/GetDocumentContentSuccess"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       },
@@ -583,56 +953,33 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "content": {
-                    "type": "string",
-                    "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateDocumentContentReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/UpdateDocumentContentSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/UpdateDocumentContentValidation"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           },
           "423": {
-            "$ref": "#/components/responses/AcquireLock"
+            "$ref": "#/components/responses/DocumentLockRequired"
           }
         }
       }
@@ -650,55 +997,18 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "collaborators": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "username": {
-                            "type": "string",
-                            "example": "john.smith"
-                          },
-                          "role": {
-                            "type": "string",
-                            "enum": ["manage", "edit", "view", "none", "other"],
-                            "example": "manage"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/GetCollaboratorsSuccess"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       }
@@ -716,64 +1026,33 @@
         ],
         "parameters": [
           {
-            "description": "Document universally unique identifier",
-            "in": "path",
-            "name": "documentUuid",
-            "schema": {
-              "type": "string",
-              "example": "4617bc72-686e-4090-9722-a136509d7ab8"
-            },
-            "required": true
+            "$ref": "#/components/parameters/DocumentUuid"
           },
           {
-            "description": "User name",
-            "in": "path",
-            "name": "username",
-            "schema": {
-              "type": "string",
-              "example": "john.smith"
-            },
-            "required": true
+            "$ref":"#/components/parameters/Username"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "role": {
-                    "type": "string",
-                    "enum": ["manage", "edit", "view", "none"],
-                    "example": "edit"
-                  }
-                }
+                "$ref": "#/components/schemas/SetRoleReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/SetRoleSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/SetRoleValidation"
           },
           "401": {
-            "$ref": "#/components/responses/NotAuthorized"
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenOrMissing"
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       }

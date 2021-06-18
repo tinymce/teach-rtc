@@ -10,7 +10,7 @@ const { DateTime } = require("luxon");
 const swaggerDocument = require('../docs/swagger.json');
 
 
-// middle-wear
+// middle-ware
 const isAuthenticated = (req, res, next) => {
   passport.authenticate('jwt', { session: false }, (err, user, info) => {
     if (err) {
@@ -48,11 +48,11 @@ const hasLock = async (req, res, next) => {
   if (!user) throw new Error('User must be authenticated');
   if (uuid === undefined) throw new Error('Path must contain parameter documentUuid');
   const oldest_valid_lock = DateTime.now().minus({ day: 1 });
-  const rows = await req.db.select('lock_user', 'lock_time').from('documents').where('uuid', uuid);
-  if (rows.length !== 1 || rows[0].lock_user !== user) {
+  const rows = await req.db.select('lockUser', 'lockTime').from('documents').where('uuid', uuid);
+  if (rows.length !== 1 || rows[0].lockUser !== user) {
     return res.status(423).json({ success: false, message: 'User must acquire a lock on the document.' });
   }
-  if (DateTime.fromISO(rows[0].lock_time) < oldest_valid_lock) {
+  if (DateTime.fromISO(rows[0].lockTime) < oldest_valid_lock) {
     return res.status(423).json({ success: false, message: 'User must re-acquire the lock on the document as it has expired.' });
   }
   next()
@@ -70,6 +70,7 @@ const ROLES = {
 };
 
 ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
+ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
 
 const hasManagePermission = hasPermission(PERMISSION_MANAGE);
 const hasWritePermission = hasPermission(PERMISSION_WRITE);
@@ -83,8 +84,11 @@ router.get('/', swaggerUi.setup(swaggerDocument));
 router.post('/jwt', async function (req, res, next) {
   const username = req.body.username;
   const password = req.body.password;
-  if (!username || !password) {
-    res.status(400).json({ success: false, message: 'Both username and password are required.' });
+  if (typeof username !== 'string' && /^[a-zA-Z0-9~_.-]+$/.test(username)) {
+    return res.status(400).json({ success: false, message: 'The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ .' });
+  }
+  if (typeof password !== 'string' || passport.length === 0) {
+    return res.status(400).json({ success: false, message: 'The password property must be a non-empty string.' });
   }
   rows = await req.db.select('hash').from('users').where('username', username);
   if (rows.length === 0) {
@@ -111,32 +115,52 @@ router.get('/users', async function (req, res, next) {
 router.post('/users', async function (req, res, next) {
   const username = req.body.username;
   const password = req.body.password;
-  if (!username || !password) {
-    res.status(400).json({ success: false, message: 'Both username and password are required.' });
-    return;
+  const fullName = req.body.fullName;
+  if (typeof username !== 'string' && /^[a-zA-Z0-9~_.-]+$/.test(username)) {
+    return res.status(400).json({ success: false, message: 'The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ .' });
+  }
+  if (typeof password !== 'string' || passport.length === 0) {
+    return res.status(400).json({ success: false, message: 'The password property must be a non-empty string.' });
+  }
+  if (typeof fullName !== 'string' || fullName.length === 0) {
+    return res.status(400).json({ success: false, message: 'The fullName property must be a non-empty string.' });
   }
   // increase the difficulty of generating the hash to make reverse engineering passwords very computationally intensive
   const rounds = 12;
   // note that this generates a salt, uses it to hash the password and then returns the "<salt>.<hash>" combination
   const hash = await bcrypt.hash(password, rounds);
   try {
-    await req.db.insert({ username, hash }).into('users');
+    await req.db.insert({ username, hash, fullName }).into('users');
     res.status(201).json({ success: true });
   } catch (e) {
+    console.log(e);
     res.status(409).json({ success: false, message: 'A user already exists with that username.' });
   }
 });
 
+// get user details
+router.get('/users/:username', isAuthenticated, async function (req, res, next) {
+  const rows = await (
+    req.db.select('fullName')
+      .from('users')
+      .where('username', '=', req.params.username)
+  );
+  if (rows.length === 0) {
+    return res.status(404).json({ success: false, message: 'No user was found with that username.' });
+  }
+  return res.json({ success: true, fullName: rows[0].fullName });
+});
+
 // get all documents
 router.get('/documents', isAuthenticated, async function (req, res, next) {
-  const rows = await (
+  const documents = await (
     req.db.select('documents.uuid')
       .from('documents')
       .innerJoin('collaborators', 'documents.uuid', 'collaborators.document')
       .where('collaborators.user', req.user)
       .andWhere('collaborators.permissions', '>=', 1)
+      .pluck('uuid')
   );
-  const documents = rows.map((row) => row.uuid);
   res.json({ success: true, documents });
 });
 
@@ -167,22 +191,22 @@ router.put('/documents/:documentUuid/lock', isAuthenticated, hasWritePermission,
   if (release) {
     // release the lock if the user holds it
     await req.db('documents').
-      where({ uuid: uuid, lock_user: user }).
-      update({ 'lock_user': null, 'lock_time': null });
+      where({ uuid: uuid, lockUser: user }).
+      update({ 'lockUser': null, 'lockTime': null });
     res.json({ success: true, release });
   } else {
     const now = DateTime.now().toISO();
-    const oldest_valid_lock = DateTime.now().minus({ seconds: 60 }).toISO();
+    const oldestValidLock = DateTime.now().minus({ seconds: 60 }).toISO();
     // attempt to acquire the lock
     await req.db('documents').where('uuid', uuid).
       andWhere(function () {
         // a lock can be acquired if no-one holds it, it is already held by the user, or if the lock has expired
-        this.whereNull('lock_user').orWhere('lock_user', user).orWhere('lock_time', '<', oldest_valid_lock)
+        this.whereNull('lockUser').orWhere('lockUser', user).orWhere('lockTime', '<', oldestValidLock)
       }).
-      update({ 'lock_user': user, 'lock_time': now });
+      update({ 'lockUser': user, 'lockTime': now });
     // check if the user succeeded in acquiring the lock
-    const rows = await req.db.select('lock_user').from('documents').where('uuid', uuid);
-    const success = rows.length === 1 && rows[0].lock_user === user;
+    const rows = await req.db.select('lockUser').from('documents').where('uuid', uuid);
+    const success = rows.length === 1 && rows[0].lockUser === user;
     // note that failure to acquire the lock is not an error so we still return status 200
     res.json({ success, release });
   }
@@ -216,7 +240,7 @@ router.get('/documents/:documentUuid/collaborators', isAuthenticated, hasReadPer
   const rows = await req.db.select('user', 'permissions').from('collaborators').where('document', req.params.documentUuid).orderBy([{ column: 'permissions', order: 'desc' }, { column: 'user', order: 'asc' }]);
   const collaborators = rows.map(({ user, permissions }) => ({
     username: user,
-    role: ROLES_LOOKUP[permissions] ?? 'other'
+    role: ROLES_LOOKUP[permissions] ?? ROLE_ORD.find((r) => (permissions & ROLES[r]) === ROLES[r]) ?? 'none'
   }));
   res.json({ success: true, collaborators });
 });
@@ -226,12 +250,12 @@ router.put('/documents/:documentUuid/collaborators/:username', isAuthenticated, 
   const document = req.params.documentUuid;
   // validate inputs
   const user = req.params.username;
-  if (typeof user !== 'string' || user.length === 0) {
-    return res.status(400).json({ success: false, message: 'The username path parameter is required.' });
+  if (typeof user !== 'string' && /^[a-zA-Z0-9~_.-]+$/.test(user)) {
+    return res.status(400).json({ success: false, message: 'The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ .' });
   }
   const role = req.body.role;
   if (!Object.keys(ROLES).includes(role)) {
-    return res.status(400).json({ success: false, message: 'The role must be one of: "' + Object.keys(ROLES).join('", "') + '".' });
+    return res.status(400).json({ success: false, message: 'The role must be one of: "' + ROLE_ORD.join('", "') + '".' });
   }
   const userExists = await req.db.select('*').from('users').where('username', user);
   if (userExists.length !== 1) {

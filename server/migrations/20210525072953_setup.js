@@ -5,14 +5,16 @@ exports.up = function(knex) {
     table.string('username').notNullable().unique().primary();
     // technically this is the "<salt>.<hash>" not just the hash
     table.string('hash').notNullable();
+    // a display name that does not need to be unique and may contain unicode
+    table.string('fullName').notNullable();
   })
   .createTable('documents', table => {
     table.uuid('uuid').notNullable().unique().primary();
     table.string('title').notNullable();
     table.string('content').notNullable().defaultTo('');
-    table.string('lock_user');
-    table.datetime('lock_time');
-    table.foreign('lock_user').references('users.username').onDelete('CASCADE').onUpdate('RESTRICT');
+    table.string('lockUser');
+    table.datetime('lockTime');
+    table.foreign('lockUser').references('users.username').onDelete('CASCADE').onUpdate('RESTRICT');
   })
   .createTable('collaborators', table => {
     table.string('document').notNullable();
