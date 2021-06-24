@@ -26,9 +26,18 @@
         "in": "path",
         "name": "username",
         "schema": {
-          "$ref":"#/components/schemas/Username"
+          "$ref": "#/components/schemas/Username"
         },
         "required": true
+      },
+      "KeyHint": {
+        "description": "Request a specific key based on the time it was made.",
+        "in": "query",
+        "name": "keyHint",
+        "schema": {
+          "$ref":"#/components/schemas/KeyHint"
+        },
+        "required": false
       }
     },
     "responses": {
@@ -169,32 +178,22 @@
           }
         }
       },
-      "LockDocumentSuccess": {
-        "description": "Success",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LockDocumentResp"
-            }
-          }
-        }
-      },
-      "LockDocumentValidation": {
-        "description": "Inputs failed validation.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/InvalidRelease"
-            }
-          }
-        }
-      },
       "GetDocumentTitleSuccess": {
         "description": "Success",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/GetDocumentTitleResp"
+            }
+          }
+        }
+      },
+      "GetDocumentKeySuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentKeyResp"
             }
           }
         }
@@ -224,7 +223,14 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/InvalidContent"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InvalidContent"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidVersion"
+                }
+              ]
             }
           }
         }
@@ -254,7 +260,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "oneOf":[
+              "oneOf": [
                 {
                   "$ref": "#/components/schemas/InvalidUsername"
                 },
@@ -289,12 +295,12 @@
           }
         }
       },
-      "DocumentLockRequired": {
-        "description": "User must acquire a lock on the document.",
+      "UnknownKey": {
+        "description": "The requested key can not be found.",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/DocumentLockRequired"
+              "$ref": "#/components/schemas/UnknownKeyResp"
             }
           }
         }
@@ -346,6 +352,15 @@
         "type": "string",
         "description": "JWT token",
         "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjM5OTg1MzksImV4cCI6MTYyNDA4NDkzOSwic3ViIjoiam9obi5zbWl0aCJ9.QImDfhGwmH79UU6je7UHzMSLzXZcDml1shCWGZuj0Ovqxv6Y0YZUpj2QNlhzLnBlQq3WMYZe1CZxgSaSq2VSEA9P22iUoOn9THzw9NJnfodEj-MyKvoP8tL2nZmW5SMSttpWVZbwun0JTq4bps0-GcH6hd9FzXUgw_YirQdMEZTYqT3Fmg2pHIt7sJsKCwx2oT2E0yiGCfH8rXDyF7HziVUcJiVNOeNA8Vxz8PMIIGGTQrlgDjRQj_WJcOxypz9HSsaxCwrsZtIp_vBEvsEe_CYEHLQ3riKTitRvUqc4LmkUrW7hGgkzo-y6E8BaTSAQ9pSJ2vW63j6FF70TPRzxZg"
+      },
+      "Key": {
+        "type": "string",
+        "example": "nVCJdUEqX3Lax1xG+jUUy4hWZ1kL2FTGLu2HuiPEz9FalXCCi3sqBK4OCmIqqnK0zFkUmJwrPDWb9imQRKBYL/siSwbAUBft8R12aAH3v5ggq6Mp09qkoC/iMSkyhK+tE4fLESTNiNoJ62FtHfwlZaW5qgt5pvjbpBRJcVT5ILv6/xeSfWkJ7LCJTzHZcG5niVwQbwA35mNrsdi8Zv87pi0/h7aZQy/qDOSLL9u5uRm7e1Nw2JIROdzupJuUsVMu"
+      },
+      "KeyHint": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2021-06-10T07:00:13.366Z"
       },
       "InvalidUsername": {
         "type": "object",
@@ -403,20 +418,6 @@
         },
         "additionalProperties": false
       },
-      "InvalidRelease": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "message": {
-            "type": "string",
-            "example": "The release option must be true or false if provided."
-          }
-        },
-        "additionalProperties": false
-      },
       "InvalidContent": {
         "type": "object",
         "properties": {
@@ -427,6 +428,20 @@
           "message": {
             "type": "string",
             "example": "The content is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidVersion": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The version must be a positive integer."
           }
         },
         "additionalProperties": false
@@ -468,20 +483,6 @@
           "message": {
             "type": "string",
             "example": "Document either does not exist or the user does not have the permission required."
-          }
-        },
-        "additionalProperties": false
-      },
-      "DocumentLockRequired": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "message": {
-            "type": "string",
-            "example": "User must acquire a lock on the document."
           }
         },
         "additionalProperties": false
@@ -663,28 +664,6 @@
           }
         }
       },
-      "LockDocumentReq": {
-        "type": "object",
-        "properties": {
-          "release": {
-            "type": "boolean",
-            "example": false
-          }
-        }
-      },
-      "LockDocumentResp": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "release": {
-            "type": "boolean",
-            "example": false
-          }
-        }
-      },
       "GetDocumentTitleResp": {
         "type": "object",
         "properties": {
@@ -698,6 +677,21 @@
           }
         }
       },
+      "GetDocumentKeyResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "key": {
+            "$ref":"#/components/schemas/Key"
+          },
+          "keyHint": {
+            "$ref":"#/components/schemas/KeyHint"
+          }
+        }
+      },
       "GetDocumentContentResp": {
         "type": "object",
         "properties": {
@@ -708,6 +702,10 @@
           "content": {
             "type": "string",
             "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          },
+          "version": {
+            "type": "integer",
+            "example": 1
           }
         }
       },
@@ -739,7 +737,7 @@
           "collaborators": {
             "type": "array",
             "items": {
-              "$ref":"#/components/schemas/Collaborator"
+              "$ref": "#/components/schemas/Collaborator"
             }
           }
         }
@@ -758,6 +756,19 @@
           "success": {
             "type": "boolean",
             "example": true
+          }
+        }
+      },
+      "UnknownKeyResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The requested key can not be found."
           }
         }
       }
@@ -918,47 +929,6 @@
         }
       }
     },
-    "/documents/{documentUuid}/lock": {
-      "put": {
-        "tags": [
-          "Documents"
-        ],
-        "summary": "Acquire or release a lock on the document.",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/DocumentUuid"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref":"#/components/schemas/LockDocumentReq"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref":"#/components/responses/LockDocumentSuccess"
-          },
-          "400": {
-            "$ref": "#/components/responses/LockDocumentValidation"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthorizationCheckFailed"
-          },
-          "403": {
-            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
-          }
-        }
-      }
-    },
     "/documents/{documentUuid}/title": {
       "get": {
         "tags": [
@@ -984,6 +954,42 @@
           },
           "403": {
             "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/key": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get document key.",
+        "description": "Get the current document key ",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          },
+          {
+            "$ref": "#/components/parameters/KeyHint"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetDocumentKeySuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnknownKey"
           }
         }
       }
@@ -1052,9 +1058,6 @@
           },
           "403": {
             "$ref": "#/components/responses/DocumentUnknownOrForbidden"
-          },
-          "423": {
-            "$ref": "#/components/responses/DocumentLockRequired"
           }
         }
       }
@@ -1104,7 +1107,7 @@
             "$ref": "#/components/parameters/DocumentUuid"
           },
           {
-            "$ref":"#/components/parameters/Username"
+            "$ref": "#/components/parameters/Username"
           }
         ],
         "requestBody": {

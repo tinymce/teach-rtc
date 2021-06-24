@@ -1,12 +1,7 @@
 import axios from 'axios';
-import { useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 const DOCUMENT_LIST_POLL_TIME = 60000;
-const LOCK_ACQUIRE_POLL_TIME = 1000;
-const LOCK_RETAIN_POLL_TIME = 30000;
-const VIEW_POLL_TIME = 5000;
-const AUTOSAVE_TIME = VIEW_POLL_TIME;
 
 /**
  * A collaborator access.
@@ -158,10 +153,11 @@ export const getContent = async ({ documentId }) => {
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
  * @param {string} inputs.content the content.
+ * @param {number} inputs.version the version.
  * @returns {Promise.<{success: true}>} promise that resolves on success.
  */
-export const saveContent = async ({ documentId, content }) => {
-  const { data } = await axios.put(`/documents/${documentId}/content`, { content });
+export const saveContent = async ({ documentId, content, version }) => {
+  const { data } = await axios.put(`/documents/${documentId}/content`, { content, version });
   if (!data.success) {
     throw new Error(data.message);
   }
@@ -169,14 +165,27 @@ export const saveContent = async ({ documentId, content }) => {
 };
 
 /**
- * Update the lock on the document.
+ * Get the secret key associated with the document and the optional key hint.
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
- * @param {boolean} inputs.release should the lock be released?
- * @returns {Promise<{success: boolean, release: boolean}>} promise that contains if the operation was a success and if the lock was released
+ * @param {string=} inputs.keyHint the key hint.
+ * @returns {Promise.<{success: true, key: string, keyHint: string}>} promise that contains the secret key and hint.
  */
-export const updateLock = async ({ documentId, release }) => {
-  const { data } = await axios.put(`/documents/${documentId}/lock`, { release });
+export const getSecretKey = async ({ documentId, keyHint }) => {
+  const { data } = await axios.get(`/documents/${documentId}/key`, { params: { keyHint } });
+  if (!data.success) throw new Error(data.message);
+  return data;
+};
+
+/**
+ * Get a JSON Web Token that relates specifically to this document and the role the user has.
+ * @param {object} inputs the inputs.
+ * @param {string} inputs.documentId the document ID.
+ * @returns {Promise.<{success: true, token: string}>} promise that contains the token.
+ */
+export const getJwt = async ({ documentId }) => {
+  const { data } = await axios.get(`/documents/${documentId}/jwt`);
+  if (!data.success) throw new Error(data.message);
   return data;
 };
 
@@ -276,136 +285,4 @@ export const usePossibleCollaborators = ({ collaborators, needed }) => {
     }
   }, [collaborators, needed]);
   return users;
-};
-
-/**
- * Hook to get the lock for editing the document.
- * @param {object} inputs the inputs.
- * @param {string} inputs.token the JWT token representing the currently logged in user.
- * @param {string} inputs.documentId the document ID.
- * @param {boolean} inputs.accessCanEdit can the current user edit the document.
- * @returns {boolean} true if the current user owns the lock on the document.
- */
-export const useDocumentLock = ({ token, documentId, accessCanEdit }) => {
-  const [ownsLock, setOwnsLock] = useState(false);
-  useEffect(() => {
-    // helper to request the lock
-    const requestLock = () => updateLock({ documentId, release: false })
-      .then(({ success }) => setOwnsLock(success))
-      .catch((e) => console.log(e.message));
-    // helper to release the lock
-    const releaseLock = () => updateLock({ documentId, release: true })
-      .catch((e) => console.log(e.message));
-    // only try to get the lock if the user is able to edit
-    if (accessCanEdit) {
-      if (!ownsLock) {
-        // attempt to acquire lock every second until we succeed
-        requestLock();
-        const timer = setInterval(requestLock, LOCK_ACQUIRE_POLL_TIME);
-        return () => clearInterval(timer);
-      } else {
-        // after we have the lock maintain it by reacquiring every 30 seconds,
-        // lock should only expire if we fail to acquire it for 60 seconds
-        const timer = setInterval(requestLock, LOCK_RETAIN_POLL_TIME);
-        return () => {
-          // when we unmount stop trying to acquire the lock and release it if we have it
-          clearInterval(timer);
-          releaseLock();
-        };
-      }
-    } else {
-      setOwnsLock(false);
-    }
-  }, [token, documentId, accessCanEdit, ownsLock]);
-  // return our current lock status
-  return ownsLock;
-};
-
-/**
- * Hook to get the initial value of the document.
- * @param {object} inputs the inputs.
- * @param {string} inputs.documentId the document ID.
- * @param {boolean} inputs.canEdit can the user edit the document.
- * @returns {string} the initial value of the document.
- */
-export const useDocumentInitialValue = ({ documentId, canEdit }) => {
-  const [initialValue, setInitialValue] = useState('');
-  useEffect(() => {
-    const requestContent = () => getContent({ documentId })
-      .then(({ content }) => setInitialValue(content))
-      .catch((e) => console.log(e.message));
-    if (!canEdit) {
-      // while we can't edit, poll the content every 5 seconds
-      requestContent();
-      const timer = setInterval(requestContent, VIEW_POLL_TIME);
-      return () => clearInterval(timer);
-    } else {
-      // once we can edit get the content once to ensure we have the latest value
-      requestContent();
-    }
-  }, [documentId, canEdit]);
-  // return the initial value
-  return initialValue;
-};
-
-/**
- * Hook to autosave the editor regularly and before navigation.
- * @param {object} inputs the inputs.
- * @param {string} inputs.documentId the document ID.
- * @param {boolean} inputs.canSave can the document be saved by the current user.
- * @param {string} inputs.initialValue the document initial value.
- * @returns {React.MutableRefObject<Editor | undefined>} the reference to the tinymce instance.
- */
-export const useDocumentAutosave = ({ documentId, canSave, initialValue }) => {
-  // reference to TinyMCE that must be set by the user of this hook
-  const editorRef = useRef();
-  // the initial value came from the server so when it changes 
-  // we use that as the base saved content
-  const [savedContent, setSavedContent] = useState(initialValue);
-  useEffect(() => setSavedContent(initialValue), [initialValue]);
-  // save periodically
-  useEffect(() => {
-    // only save when owning the lock
-    if (canSave) {
-      // check for content to save every second
-      const timer = setInterval(() => {
-        if (editorRef.current) {
-          // check the current editor content against the saved content
-          const content = editorRef.current.getContent();
-          if (content !== savedContent) {
-            // save the content to the server
-            saveContent({ documentId, content }).then(({ success }) => {
-              // update the saved content when the save is confirmed
-              if (success) {
-                setSavedContent(content);
-              }
-            });
-          }
-        }
-      }, AUTOSAVE_TIME);
-      return () => clearInterval(timer);
-    }
-  }, [documentId, canSave, savedContent]);
-  // save on navigation
-  const history = useHistory();
-  useEffect(() => {
-    // stop navigation until we have gotten the editor content to save it
-    const unblock = history.block(() => {
-      // check we can actually save and the editor still exists
-      if (canSave && editorRef.current) {
-        // compare the editor content against the saved content
-        const content = editorRef.current.getContent();
-        if (content !== savedContent) {
-          // save the content to the server
-          saveContent({ documentId, content }).catch((e) => console.log(e.message));
-        }
-      }
-      // safe to continue navigation now
-      unblock();
-    });
-    return () => unblock();
-  });
-
-  // return the editor reference to allow the editor to be set
-  return editorRef;
 };

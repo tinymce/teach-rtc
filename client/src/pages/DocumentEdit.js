@@ -1,7 +1,11 @@
+import { useParams } from 'react-router';
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
-import { useParams } from 'react-router-dom';
-import { useCollaborators, useDocumentAutosave, useDocumentInitialValue, useDocumentLock, useDocumentTitle } from '../api/api';
+import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
+
+const saveSnapshot = ({ documentId, version, getContent }) => {
+  saveContent({ documentId, version, content: getContent() });
+};
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -27,22 +31,27 @@ export default function DocumentEdit({ token }) {
   const title = useDocumentTitle({ documentId });
   const { access } = useCollaborators({ documentId, username });
   const accessCanEdit = access === 'manage' || access === 'edit';
-  const ownsLock = useDocumentLock({ token, documentId, accessCanEdit });
-  const canEdit = accessCanEdit && ownsLock;
-  const initialValue = useDocumentInitialValue({ documentId, canEdit });
-  const editorRef = useDocumentAutosave({ documentId, canSave: canEdit, initialValue });
-
   return (
     <>
       <h1>{title}</h1>
       <Editor
         key={documentId}
+        cloudChannel="5-rtc"
         apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
-        disabled={!canEdit}
-        initialValue={initialValue}
-        onInit={(_evt, editor) => { editorRef.current = editor; }}
-        onRemove={() => { editorRef.current = undefined; }}
-        init={config}
+        disabled={!accessCanEdit}
+        init={{
+          ...config,
+          plugins: 'rtc ' + config.plugins,
+          rtc_document_id: documentId,
+          rtc_encryption_provider: getSecretKey,
+          rtc_token_provider: () => getJwt({ documentId }),
+          rtc_initial_content_provider: getContent,
+          rtc_snapshot: saveSnapshot,
+          rtc_user_details_provider: getUserDetails,
+          // rtc_client_connected,
+          // rtc_client_disconnected,
+          // rtc_client_info: {},
+        }}
       />
     </>
   );

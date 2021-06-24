@@ -1,5 +1,6 @@
 const router = require("express-promise-router")();
 const jwt = require('jsonwebtoken');
+const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const swaggerUi = require('swagger-ui-express');
 const passport = require('passport');
@@ -71,6 +72,18 @@ const getPermissions = async (req) => {
   return rows.length === 1 ? rows[0].permissions : 0;
 };
 
+/**
+ * Given a request get the role that the logged-in user has for the current document.
+ * 
+ * @see getPermissions for assumptions.
+ * @param {Express.Request} req the express request object.
+ * @returns {Promise.<keyof typeof ROLES>} promise that resolves to the role.
+ */
+const getRole = async (req) => {
+  const permissions = await getPermissions(req);
+  return permissionsToRole(permissions);
+};
+
 // Express Middleware
 
 /**
@@ -124,34 +137,6 @@ const hasWritePermission = hasPermission(PERMISSION_WRITE);
  * @see getPermissions for assumptions.
  */
 const hasReadPermission = hasPermission(PERMISSION_READ);
-
-/**
- * Middleware to check if the user has the lock on the document.
- * 
- * Assumes that the user has been authenticated with the username in the
- * req.user value and that the document UUID is in the path of the request
- * named documentUuid.
- * 
- * @param {Express.Request} req the express request object.
- * @param {Express.Response} res the express response object.
- * @param {(err: any?) => void} next pass on to express' next handler.
- * @returns {Promise.<void>} promise that resolves when complete.
- */
-const hasLock = async (req, res, next) => {
-  const user = req.user;
-  const uuid = req.params.documentUuid;
-  if (!user) throw new Error('User must be authenticated');
-  if (uuid === undefined) throw new Error('Path must contain parameter documentUuid');
-  const oldest_valid_lock = DateTime.now().minus({ day: 1 });
-  const rows = await req.db.select('lockUser', 'lockTime').from('documents').where('uuid', uuid);
-  if (rows.length !== 1 || rows[0].lockUser !== user) {
-    return res.status(423).json({ success: false, message: 'User must acquire a lock on the document.' });
-  }
-  if (DateTime.fromISO(rows[0].lockTime) < oldest_valid_lock) {
-    return res.status(423).json({ success: false, message: 'User must re-acquire the lock on the document as it has expired.' });
-  }
-  next()
-};
 
 // API docs
 router.use('/', swaggerUi.serve);
@@ -278,49 +263,6 @@ router.post('/documents', isAuthenticated, async function (req, res, next) {
   res.json({ success: true, uuid });
 });
 
-// acquire or release a document lock
-router.put('/documents/:documentUuid/lock', isAuthenticated, hasWritePermission, async function (req, res, next) {
-  // get the authenticated user and the document UUID and assert they exist (which they must due to the previous middleware)
-  const user = req.user;
-  const uuid = req.params.documentUuid;
-  if (!user) throw new Error('User must be authenticated');
-  if (uuid === undefined) throw new Error('Path must contain parameter documentUuid');
-  // get the release flag from the request body or a default
-  const release = req.body.release ?? false;
-  // validate the release flag
-  if (typeof release !== 'boolean') {
-    res.status(400).json({ success: false, message: 'The release option must be true or false if provided.' });
-    return;
-  }
-  // now check if the document lock must be acquired or released
-  if (release) {
-    // release the lock if the user holds it
-    await req.db('documents').
-      where({ uuid: uuid, lockUser: user }).
-      update({ 'lockUser': null, 'lockTime': null });
-    // we are always successful in giving up the lock, 
-    // however that does not mean that we owned it.
-    res.json({ success: true, release });
-  } else {
-    // the user wishes to acquire the lock
-    // in case there is an existing lock calculate how new it must be to be valid
-    const now = DateTime.now().toISO();
-    const oldestValidLock = DateTime.now().minus({ seconds: 60 }).toISO();
-    // attempt to acquire the lock
-    await req.db('documents').where('uuid', uuid).
-      andWhere(function () {
-        // a lock can be acquired if no-one holds it, it is already held by the user, or if the lock has expired
-        this.whereNull('lockUser').orWhere('lockUser', user).orWhere('lockTime', '<', oldestValidLock)
-      }).
-      update({ 'lockUser': user, 'lockTime': now });
-    // check if the user succeeded in acquiring the lock
-    const rows = await req.db.select('lockUser').from('documents').where('uuid', uuid);
-    const success = rows.length === 1 && rows[0].lockUser === user;
-    // note that failure to acquire the lock is not an error so we still return status 200
-    res.json({ success, release });
-  }
-});
-
 // get document title
 router.get('/documents/:documentUuid/title', isAuthenticated, hasReadPermission, async function (req, res, next) {
   // get the document title from the database
@@ -338,18 +280,80 @@ router.get('/documents/:documentUuid/content', isAuthenticated, hasReadPermissio
 });
 
 // store document content
-router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermission, hasLock, async function (req, res, next) {
-  // get the document content from the body of the request
+router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermission, async function (req, res, next) {
+  // get the document content and version from the body of the request
   const content = req.body.content;
+  const version = req.body.version;
   // validate the content
   if (typeof content !== 'string') {
     res.status(400).json({ success: false, message: 'The content is required.' });
     return;
   }
+  // validate the version
+  if (typeof version !== 'number' || !/^\d+$/.test("" + version)) {
+    res.status(400).json({ success: false, message: 'The version must be a positive integer.' });
+    return;
+  }
   // update the document content
-  await req.db('documents').where('uuid', req.params.documentUuid).update({ content });
+  await req.db('documents').where('uuid', req.params.documentUuid).andWhere('version', '<', version).update({ content, version });
   // return success
   res.status(200).json({ success: true });
+});
+
+// get the secret key used to encrypt the document
+router.get('/documents/:documentUuid/key', isAuthenticated, hasReadPermission, async function (req, res, next) {
+  // get the keyHint from the query string, 
+  // the key hint will be the time a key was created in UTC+0
+  const keyHint = req.query.keyHint;
+  // the current time in UTC+0
+  const now = DateTime.utc();
+  // look for an existing key that either is associated with the key hint, or is recently created (within last hour)
+  const rows = await req.db.select('key', 'created').from('keys').where('document', req.params.documentUuid).andWhere((builder) => {
+    if (keyHint) {
+      // when the key hint is provided we require an exact match
+      builder.where('created', '=', keyHint);
+    } else {
+      // otherwise we want a key created in the last hour
+      builder.where('created', '>=', now.minus({ hour: 1 }).toISO())
+    }
+  }).orderBy('created', 'desc'); // when there are multiple options get the most recent
+  if (rows.length > 0) {
+    // an existing key was found
+    return res.json({ success: true, key: rows[0].key, keyHint: rows[0].created });
+  }
+  if (keyHint) {
+    // we could not find an existing key to match the keyHint
+    return res.status(404).json({ success: false, message: 'Could not find the requested key' });
+  }
+  // randomly generate a new secret key, 
+  // 192 bytes was chosen because when converted to base64 it becomes a string of length 256.
+  const key = crypto.randomBytes(192).toString('base64');
+  // put the new secret key in the database
+  await req.db.insert({ document: req.params.documentUuid, created: now.toISO(), key }).into('keys');
+  // return the new secret key
+  return res.json({ success: true, key, keyHint: now.toISO() });
+});
+
+// get a JWT token specific to the document allowing it to be edited
+router.get('/documents/:documentUuid/jwt', isAuthenticated, hasReadPermission, async function (req, res, next) {
+  // find the role the current user has to access this document
+  const role = await getRole(req);
+  // assertion to enforce assumptions
+  if (role === 'none') throw new Error('Minimum permission of "view" expected');
+  // lookup for the access understood by RTC assigned to each role
+  const roleToAccess = {
+    'manage': 'write',
+    'edit': 'write',
+    'view': 'read'
+  };
+  // sign a JSON web token specific to the document with the users access
+  const token = jwt.sign(
+    { 'https://rtc.tiny.cloud/doc': req.params.documentUuid, 'https://rtc.tiny.cloud/access': roleToAccess[role] },
+    process.env.PRIVATE_KEY,
+    { subject: req.user, expiresIn: '5m', algorithm: 'RS256' }
+  );
+  // return the new JSON web token
+  res.json({ success: true, token });
 });
 
 // get list of users with access
