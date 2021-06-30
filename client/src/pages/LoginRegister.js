@@ -1,29 +1,38 @@
 import React, { useState } from 'react';
 import { Alert, Button, Form } from 'react-bootstrap';
 import { useHistory } from 'react-router';
-import axios from 'axios';
+import { loginUser, registerUser } from '../api/api';
 
 export default function LoginRegister({ setToken }) {
   const history = useHistory();
-  const [{ username, password, confirmPassword, register }, setData] = useState({ username: '', password: '', confirmPassword: '', register: false });
+  const [{ username, password, confirmPassword, fullName, register }, setData] = useState({ username: '', password: '', confirmPassword: '', fullName: '', register: false });
   const [error, setError] = useState(undefined);
 
   const loginOrRegister = async () => {
+    if (!/^[a-zA-Z0-9~_.-]+$/.test(username)) {
+      return setError('The username must not be empty and must only contain alphanumeric characters with tilde, underscore, dot or dash.')
+    }
+    if (password.length === 0) {
+      return setError('The password must not be empty.');
+    }
     if (register) {
       if (password !== confirmPassword) {
         return setError('The password does not match the confirmation password.');
       }
-      const { data: register } = await axios.post('/users', { username, password });
-      if (!register.success) {
-        return setError(register.message);
+      if (!/\S/.test(fullName)) {
+        return setError('The full name must contain visible characters.')
+      }
+      const { success, message } = await registerUser({ username, password, fullName });
+      if (!success) {
+        return setError(message);
       }
     }
-    const { data: login } = await axios.post('/jwt', { username, password });
-    if (!login.success) {
-      return setError(login.message);
+    const { success, message, token } = await loginUser({ username, password });
+    if (!success) {
+      return setError(message);
     }
     setError(undefined);
-    setToken(login.token);
+    setToken(token);
     history.push('/');
   };
 
@@ -51,10 +60,16 @@ export default function LoginRegister({ setToken }) {
           <Form.Check type="checkbox" label="Register?" name="register" value={register} onChange={onChange} />
         </Form.Group>
         {register && (
-          <Form.Group controlId="formRegisterConfirmPassword">
-            <Form.Label>Confirm Password</Form.Label>
-            <Form.Control type="password" placeholder="Confirm Password" name="confirmPassword" value={confirmPassword} onChange={onChange} required />
-          </Form.Group>
+          <>
+            <Form.Group controlId="formRegisterConfirmPassword">
+              <Form.Label>Confirm Password</Form.Label>
+              <Form.Control type="password" placeholder="Confirm Password" name="confirmPassword" value={confirmPassword} onChange={onChange} required />
+            </Form.Group>
+            <Form.Group controlId="formRegisterDisplayName">
+              <Form.Label>Full Name</Form.Label>
+              <Form.Control type="text" placeholder="Full Name" name="fullName" value={fullName} onChange={onChange} required />
+            </Form.Group>
+          </>
         )}
         <Button variant="primary" type="submit">{register ? 'Register' : 'Login' }</Button>
       </Form>

@@ -1,11 +1,11 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, Button, ListGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { decode } from 'jsonwebtoken';
 import NewDocModal from '../modals/NewDocModal';
 import NewCollaboratorModal from '../modals/NewCollaboratorModal';
 import EditCollaboratorModal from '../modals/EditCollaboratorModal';
+import { createDocument, setCollaborator, useCollaborators, useDocuments, useDocumentTitle, usePossibleCollaborators } from '../api/api';
 
 const ROLE_TEXT = {
   'manage': 'Manager',
@@ -33,67 +33,28 @@ const Collaborator = ({ username, role, onEdit }) => {
   );
 };
 
-const useTitle = (uuid) => {
-  const [title, setTitle] = useState('');
-  useEffect(() => {
-    axios.get(`/documents/${uuid}/title`)
-      .then(({ data }) => setTitle(data.title));
-  }, [uuid]);
-  return title;
-};
-
-const useCollaborators = (uuid) => {
-  const [tick, setTick] = useState(0);
-  const [collaborators, setCollaborators] = useState([]);
-  useEffect(() => {
-    axios.get(`/documents/${uuid}/collaborators`)
-      .then(({ data }) => setCollaborators(data.collaborators));
-  }, [uuid, tick]);
-  const requestCollaborators = () => setTick((prev) => prev + 1);
-  return { collaborators, requestCollaborators };
-};
-
-const usePossibleCollaborators = (collaborators, needed) => {
-  const [users, setUsers] = useState([]);
-  useEffect(() => {
-    if (needed) {
-      axios.get('/users').then(({ data }) => {
-        if (data.success) {
-          const userLookup = Object.fromEntries(collaborators.map((c) => [c.username, true]));
-          setUsers(data.users.filter((user) => !userLookup[user]));
-        }
-      });
-    }
-  }, [collaborators, needed]);
-  return users;
-};
-
-const Doc = ({ uuid, username }) => {
-  const title = useTitle(uuid);
-  const { collaborators, requestCollaborators } = useCollaborators(uuid);
-  // find our role
-  const role = (collaborators.find((c) => c.username === username) ?? { username, role: 'none' }).role;
+const Doc = ({ documentId, username }) => {
+  const title = useDocumentTitle({ documentId });
+  const { collaborators, role, requestCollaborators } = useCollaborators({ documentId, username });
   const isManager = role === 'manage';
   // separate out the other collaborators
   const others = collaborators.filter((c) => c.username !== username);
-  // modal data
+  // modal display flags
   const [addCollaborator, setAddCollaborator] = useState(false);
   const [editCollaborator, setEditCollaborator] = useState(undefined);
-  const users = usePossibleCollaborators(collaborators, addCollaborator);
+  // modal data
+  const users = usePossibleCollaborators({ collaborators, needed: addCollaborator });
   // update the collaborators
   const updateCollaborators = (username, role) => {
-    axios.put(
-      `/documents/${uuid}/collaborators/${username}`,
-      { role }
-    ).then(({ data }) => {
-      if (data.success) requestCollaborators();
-    });
+    setCollaborator({ documentId, username, role })
+      .then(() => requestCollaborators())
+      .catch((e) => console.log(e.message));
   };
   // display a document row
   return (
     <tr>
       <td>
-        <Link to={`/documents/${uuid}`}>{title}</Link>
+        <Link to={`/documents/${documentId}`}>{title}</Link>
       </td>
       <td>
         <Badge variant={ROLE_VARIANT[role]}>{ROLE_TEXT[role]}</Badge>
@@ -111,25 +72,14 @@ const Doc = ({ uuid, username }) => {
 };
 
 export default function DocumentList({ token }) {
-  const { sub } = token ? decode(token) : {};
-  const [documents, setDocuments] = useState([]);
-  useEffect(() => {
-    const update = () => {
-      axios.get('/documents')
-        .then(({ data }) => setDocuments(data.documents ?? []));
-    };
-    update();
-    const timer = setInterval(update, 60000);
-    return () => clearInterval(timer);
-  }, [token]);
-
+  const { sub: username } = token ? decode(token) : {};
+  const { documents, appendDocument } = useDocuments({ token });
+  // modal display flag
   const [addDocument, setAddDocument] = useState(false);
-
+  // modal callbacks
   const cancelNewDocument = () => setAddDocument(false);
-
   const addNewDocument = (title) => {
-    axios.post('/documents', { title })
-      .then(({ data }) => setDocuments((documents) => [...documents, data.uuid]));
+    createDocument({ title }).then(({ uuid }) => appendDocument(uuid));
     setAddDocument(false);
   };
 
@@ -146,7 +96,7 @@ export default function DocumentList({ token }) {
         </thead>
         <tbody>
           {
-            documents.map((docUuid) => <Doc key={docUuid} uuid={docUuid} username={sub} />)
+            documents.map((docUuid) => <Doc key={docUuid} documentId={docUuid} username={username} />)
           }
         </tbody>
       </Table>
