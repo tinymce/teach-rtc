@@ -131,12 +131,12 @@ export const setCollaborator = async ({ documentId, username, role }) => {
  * Get the document content.
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
- * @returns {Promise<string>} promise containing the content.
+ * @returns {Promise<{success: true, content: string}>} promise containing the content.
  */
 export const getContent = async ({ documentId }) => {
   const { data } = await axios.get(`/documents/${documentId}/content`);
   if (!data.success) throw new Error(data.message);
-  return data.content;
+  return data;
 };
 
 /**
@@ -298,7 +298,7 @@ export const useDocumentInitialValue = ({ documentId, canEdit }) => {
   const [initialValue, setInitialValue] = useState('');
   useEffect(() => {
     const requestContent = () => getContent({ documentId })
-      .then(setInitialValue)
+      .then(({ content }) => setInitialValue(content))
       .catch((e) => console.log(e.message));
     if (!canEdit) {
       // while we can't edit, poll the content every 5 seconds
