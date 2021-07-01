@@ -89,6 +89,16 @@
           }
         }
       },
+      "GetUserSuccess": {
+        "description": "Successfully got details about a user.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetUserResp"
+            }
+          }
+        }
+      },
       "CreateUserValidation": {
         "description": "Inputs failed validation.",
         "content": {
@@ -115,6 +125,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/CreateUserConflict"
+            }
+          }
+        }
+      },
+      "GetUserNotFound": {
+        "description": "The user was not found in the database.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetUserNotFound"
             }
           }
         }
@@ -580,6 +600,32 @@
         },
         "additionalProperties": false
       },
+      "GetUserResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "fullName": {
+            "$ref": "#/components/schemas/FullName"
+          }
+        }
+      },
+      "GetUserNotFound": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "No user was found with that username."
+          }
+        },
+        "additionalProperties": false
+      },
       "ListDocumentsResp": {
         "type": "object",
         "properties": {
@@ -787,6 +833,35 @@
           },
           "409": {
             "$ref": "#/components/responses/CreateUserConflict"
+          }
+        }
+      }
+    },
+    "/users/{username}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get details of a user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref":"#/components/parameters/Username"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetUserSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/GetUserNotFound"
           }
         }
       }
