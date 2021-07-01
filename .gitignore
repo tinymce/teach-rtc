@@ -1,36 +1,32 @@
+# OS files
+.DS_Store
 
-# client files
+# config files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# yarn/npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # dependencies
-/client/node_modules
+node_modules
+
+# client dependencies
 /client/.pnp
 /client/**/.pnp.js
 
-# testing
+# client testing
 /client/coverage
 
-# production
+# client production
 /client/build
 
-# misc
-/client/**/.DS_Store
-/client/**/.env.local
-/client/**/.env.development.local
-/client/**/.env.test.local
-/client/**/.env.production.local
-
-/client/**/npm-debug.log*
-/client/**/yarn-debug.log*
-/client/**/yarn-error.log*
-
-# server files
-
-# config
-/server/.env
+# server config
 /server/rsa-key*
 
-# dependencies
-/server/node_modules
-
-# database
+# server database
 /server/dev.sqlite3
