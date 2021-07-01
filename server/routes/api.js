@@ -9,6 +9,36 @@ const { DateTime } = require("luxon");
 
 const swaggerDocument = require('../docs/swagger.json');
 
+// helpers
+const PERMISSION_MANAGE = 4;
+const PERMISSION_WRITE = 2;
+const PERMISSION_READ = 1;
+
+const ROLES = {
+  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ,
+  'edit': PERMISSION_WRITE | PERMISSION_READ,
+  'view': PERMISSION_READ,
+  'none': 0
+};
+
+ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
+ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
+
+const permissionsToRole = (permissions) => ROLES_LOOKUP[permissions] ?? ROLE_ORD.find((r) => (permissions & ROLES[r]) === ROLES[r]) ?? 'none';
+
+const getPermissions = async (req) => {
+  const user = req.user;
+  const document = req.params.documentUuid;
+  if (!user) throw new Error('User must be authenticated');
+  if (document === undefined) throw new Error('Path must contain parameter documentUuid');
+  const rows = await (
+    req.db
+      .select('permissions')
+      .from('collaborators')
+      .where({ document, user })
+  );
+  return rows.length === 1 ? rows[0].permissions : 0;
+};
 
 // middle-ware
 const isAuthenticated = (req, res, next) => {
@@ -25,22 +55,16 @@ const isAuthenticated = (req, res, next) => {
 };
 
 const hasPermission = (permission) => async (req, res, next) => {
-  const user = req.user;
-  const document = req.params.documentUuid;
-  if (!user) throw new Error('User must be authenticated');
-  if (document === undefined) throw new Error('Path must contain parameter documentUuid');
-  const rows = await (
-    req.db
-      .select('permissions')
-      .from('collaborators')
-      .where({ document, user })
-  );
-  const permissions = rows.length === 1 ? rows[0].permissions : 0;
+  const permissions = await getPermissions(req);
   if (permissions === 0 || (permissions & permission) !== permission) {
     return res.status(403).json({ success: false, message: 'Document either does not exist or the user does not have the permission required.' });
   }
   next();
 };
+
+const hasManagePermission = hasPermission(PERMISSION_MANAGE);
+const hasWritePermission = hasPermission(PERMISSION_WRITE);
+const hasReadPermission = hasPermission(PERMISSION_READ);
 
 const hasLock = async (req, res, next) => {
   const user = req.user;
@@ -56,25 +80,7 @@ const hasLock = async (req, res, next) => {
     return res.status(423).json({ success: false, message: 'User must re-acquire the lock on the document as it has expired.' });
   }
   next()
-}
-
-const PERMISSION_MANAGE = 4;
-const PERMISSION_WRITE = 2;
-const PERMISSION_READ = 1;
-
-const ROLES = {
-  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ,
-  'edit': PERMISSION_WRITE | PERMISSION_READ,
-  'view': PERMISSION_READ,
-  'none': 0
 };
-
-ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
-ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
-
-const hasManagePermission = hasPermission(PERMISSION_MANAGE);
-const hasWritePermission = hasPermission(PERMISSION_WRITE);
-const hasReadPermission = hasPermission(PERMISSION_READ);
 
 // API docs
 router.use('/', swaggerUi.serve);
@@ -240,7 +246,7 @@ router.get('/documents/:documentUuid/collaborators', isAuthenticated, hasReadPer
   const rows = await req.db.select('user', 'permissions').from('collaborators').where('document', req.params.documentUuid).orderBy([{ column: 'permissions', order: 'desc' }, { column: 'user', order: 'asc' }]);
   const collaborators = rows.map(({ user, permissions }) => ({
     username: user,
-    role: ROLES_LOOKUP[permissions] ?? ROLE_ORD.find((r) => (permissions & ROLES[r]) === ROLES[r]) ?? 'none'
+    role: permissionsToRole(permissions)
   }));
   res.json({ success: true, collaborators });
 });
