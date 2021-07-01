@@ -2,6 +2,7 @@ import { Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { LinkContainer } from "react-router-bootstrap";
 import { decode } from 'jsonwebtoken';
 import { useEffect, useState } from 'react';
+import { useUserDetails } from '../api/api';
 
 const getSessionRemainder = (exp) => exp !== undefined ? Math.max(0, exp - Math.ceil(Date.now() / 1000)) : 0;
 
@@ -51,6 +52,7 @@ const SessionExpiry = ({ exp }) => {
 
 export default function Navigation({ token }) {
   const { sub, exp } = token ? decode(token) : {};
+  const { fullName } = useUserDetails({ username: sub });
 
   return (
     <Navbar bg="light" variant="light">
@@ -62,7 +64,7 @@ export default function Navigation({ token }) {
               <LinkContainer to="/documents"><Nav.Link>Documents</Nav.Link></LinkContainer>
             </Nav>
             <Nav>
-              <NavDropdown title={sub} id="account-dropdown">
+              <NavDropdown title={fullName ?? sub} id="account-dropdown">
                 <LinkContainer to="/logout"><NavDropdown.Item>Logout</NavDropdown.Item></LinkContainer>
               </NavDropdown>
             </Nav>

@@ -58,6 +58,20 @@ export const getUsers = async () => {
 };
 
 /**
+ * Get the details of a user.
+ * @param {object} inputs the inputs.
+ * @param {string} inputs.username the username.
+ * @returns {Promise.<{success: true, fullName: string}>} promise containing the user details.
+ */
+export const getUserDetails = async ({ username }) => {
+  const { data } = await axios.get(`/users/${username}`);
+  if (!data.success) {
+    throw new Error(data.message);
+  }
+  return data;
+};
+
+/**
  * Gets a list of all the documents available to the logged in user.
  * @returns {Promise.<{success: true, documents: string[]}>} promise containing the list of documents.
  */
@@ -167,6 +181,26 @@ export const updateLock = async ({ documentId, release }) => {
 };
 
 /**
+ * Hook to get details about a user.
+ * @param {object} inputs the inputs.
+ * @param {string} inputs.username the username.
+ * @returns {{fullName: string}}
+ */
+export const useUserDetails = ({ username }) => {
+  const [details, setDetails] = useState({ });
+  useEffect(() => {
+    if (username) {
+      getUserDetails({ username })
+        .then(({ fullName }) => setDetails({ fullName }))
+        .catch((e) => console.log(e.message));
+    } else {
+      setDetails({ });
+    }
+  }, [username]);
+  return details;
+};
+
+/**
  * Hook to gather the list of documents accessible by the current user.
  * @param {object} inputs the inputs.
  * @param {string} inputs.token the JWT token used to represent the current user.
@@ -223,7 +257,7 @@ export const useCollaborators = ({ documentId, username }) => {
   const requestCollaborators = () => setTick((prev) => prev + 1);
   return { collaborators, role, requestCollaborators };
 };
- 
+
 /**
  * Hook to get the list of users that could be added as a collaborator, only updating when needed is true.
  * @param {object} inputs the inputs.
