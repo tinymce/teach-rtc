@@ -60,11 +60,11 @@ export const getUsers = async () => {
 /**
  * Get the details of a user.
  * @param {object} inputs the inputs.
- * @param {string} inputs.username the username.
+ * @param {string} inputs.userId the username.
  * @returns {Promise.<{success: true, fullName: string}>} promise containing the user details.
  */
-export const getUserDetails = async ({ username }) => {
-  const { data } = await axios.get(`/users/${username}`);
+export const getUserDetails = async ({ userId }) => {
+  const { data } = await axios.get(`/users/${userId}`);
   if (!data.success) {
     throw new Error(data.message);
   }
@@ -183,20 +183,20 @@ export const updateLock = async ({ documentId, release }) => {
 /**
  * Hook to get details about a user.
  * @param {object} inputs the inputs.
- * @param {string} inputs.username the username.
+ * @param {string} inputs.userId the username.
  * @returns {{fullName: string}}
  */
-export const useUserDetails = ({ username }) => {
+export const useUserDetails = ({ userId }) => {
   const [details, setDetails] = useState({ });
   useEffect(() => {
-    if (username) {
-      getUserDetails({ username })
+    if (userId) {
+      getUserDetails({ userId })
         .then(({ fullName }) => setDetails({ fullName }))
         .catch((e) => console.log(e.message));
     } else {
       setDetails({ });
     }
-  }, [username]);
+  }, [userId]);
   return details;
 };
 

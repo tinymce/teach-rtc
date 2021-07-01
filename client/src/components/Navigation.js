@@ -52,7 +52,7 @@ const SessionExpiry = ({ exp }) => {
 
 export default function Navigation({ token }) {
   const { sub, exp } = token ? decode(token) : {};
-  const { fullName } = useUserDetails({ username: sub });
+  const { fullName } = useUserDetails({ userId: sub });
 
   return (
     <Navbar bg="light" variant="light">
