@@ -2,6 +2,8 @@ import { useParams } from 'react-router';
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
+import { useState } from 'react';
+import ConnectedClient from '../components/ConnectedClient';
 
 const saveSnapshot = ({ documentId, version, getContent }) => {
   saveContent({ documentId, version, content: getContent() });
@@ -31,9 +33,15 @@ export default function DocumentEdit({ token }) {
   const title = useDocumentTitle({ documentId });
   const { access } = useCollaborators({ documentId, username });
   const accessCanEdit = access === 'manage' || access === 'edit';
+  const [clients, setClients] = useState([]);
+  const clientConnected = (client) => setClients((clients) => [...clients, client]);
+  const clientDisconnected = (client) => setClients((clients) => clients.filter(({ clientId }) => clientId !== client.clientId));
   return (
     <>
       <h1>{title}</h1>
+      <div>
+        Other connected clients: {clients.map((c) => <ConnectedClient key={c.clientId} caretNumber={c.caretNumber} fullName={c.userDetails.fullName}/>)}
+      </div>
       <Editor
         key={documentId}
         cloudChannel="5-rtc"
@@ -48,8 +56,8 @@ export default function DocumentEdit({ token }) {
           rtc_initial_content_provider: getContent,
           rtc_snapshot: saveSnapshot,
           rtc_user_details_provider: getUserDetails,
-          // rtc_client_connected,
-          // rtc_client_disconnected,
+          rtc_client_connected: clientConnected,
+          rtc_client_disconnected: clientDisconnected,
           // rtc_client_info: {},
         }}
       />
