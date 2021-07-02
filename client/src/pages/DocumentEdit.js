@@ -4,6 +4,7 @@ import { decode } from 'jsonwebtoken';
 import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 import { useState } from 'react';
 import ConnectedClient from '../components/ConnectedClient';
+import {isMobile} from 'react-device-detect';
 
 const saveSnapshot = ({ documentId, version, getContent }) => {
   saveContent({ documentId, version, content: getContent() });
@@ -40,7 +41,7 @@ export default function DocumentEdit({ token }) {
     <>
       <h1>{title}</h1>
       <div>
-        Other connected clients: {clients.map((c) => <ConnectedClient key={c.clientId} caretNumber={c.caretNumber} fullName={c.userDetails.fullName}/>)}
+        Other connected clients: {clients.map((c) => <ConnectedClient key={c.clientId} caretNumber={c.caretNumber} fullName={c.userDetails.fullName} isMobile={c.clientInfo.isMobile}/>)}
       </div>
       <Editor
         key={documentId}
@@ -58,7 +59,7 @@ export default function DocumentEdit({ token }) {
           rtc_user_details_provider: getUserDetails,
           rtc_client_connected: clientConnected,
           rtc_client_disconnected: clientDisconnected,
-          // rtc_client_info: {},
+          rtc_client_info: { isMobile },
         }}
       />
     </>

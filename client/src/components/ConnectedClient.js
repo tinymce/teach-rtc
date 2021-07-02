@@ -9,9 +9,9 @@ const style = {
   margin: '5px'
 };
 
-export default function ConnectedClient({ caretNumber, fullName }) {
+export default function ConnectedClient({ caretNumber, fullName, isMobile }) {
   const colour = cursorColors[caretNumber - 1];
   return (
-    <span style={{ ...style, borderColor: colour, color: colour }}>{fullName}</span>
+    <span style={{ ...style, borderColor: colour, color: colour }}>{fullName}{isMobile ? ' 📱' : ''}</span>
   )
 }
