@@ -1,3 +1,122 @@
+# Teach RTC
+This project aims to teach how to use the TinyMCE Real-Time Collaboration plugin.
+
+Real-Time Collaboration (RTC) allows multiple users edit a document simultaneously,
+while automatically combining their changes. This makes it easier for integrators
+who don't have to ensure the document is locked to avoid multiple users overwriting
+each other.
+
+This repository shows the before and after stages of applying RTC to a simple
+collaborative document editing system.
+
+# About the repository
+
+This project is split into client and server. 
+
+## Server
+The server was created with the
+tool [`express-generator`](https://expressjs.com/en/starter/generator.html) using
+the setting `--no-view` as we weren't using the view engine.
+
+Then the following packages were added:
+- `bcrypt` - to salt and hash passwords.
+- `cors` - to enable accessing the API from another server.
+- `dotenv-flow` - to allow loading settings from `.env` and `.env.local` files.
+- `jsonwebtoken` - to allow signing and validating JSON web tokens.
+- `knex` - to connect to our database and build queries safely.
+- `luxon` - to parse and generate ISO date-time values.
+- `passport` - to handle authentication for requests.
+- `passport-jwt` - a `passport` plugin that supports JWT authentication.
+- `sqlite3` - to connect to a SQLite database, used by `knex`.
+- `swagger-ui-express` - to provide interactive documentation for the API.
+- `uuid` - generate universally unique identifiers for the documents.
+
+The server application is started by the node script in 
+[`server/bin/www`](server/bin/www) which has not been modified in this project.
+It then loads the main script [`server/app.js`](server/app.js) which sets up
+how express handles requests.
+
+### Express `app.js`
+The [`app.js`](server/app.js) does the following:
+1. Loads settings from `.env` and `.env.local`, these can also be specified as environment variables.
+2. Loads database settings from the `knexfile.js`.
+3. Connects to the database using `knex`.
+4. Loads the private and public keys for signing JWT tokens using the settings loaded in step 1.
+5. Sets up the authentication middleware using `passport` to read JWT bearer tokens and authenticate against the database.
+6. Loads the routes.
+7. Creates the express app.
+8. Registers middleware to:
+   - Provide the database
+   - Log request details
+   - Respond with CORS headers
+   - Parse JSON encoded requests
+   - Parse URL encoded requests
+   - Parse cookies
+   - Serve static files
+9. Registers the routes.
+10. Exports the app.
+
+
+### Database
+The database is accessed through the [`knex`](https://knexjs.org/) query builder
+which is configured by the file [`server/knexfile.js`](server/knexfile.js).
+
+There are 3 configurations listed but for the purposes of this demo we will only
+be using the `development` configuration which connects to an SQLite database
+at the file `server/dev.sqlite3`. When you first checkout the project this
+database file will not exist but it can be created by running the database
+migration scripts. 
+
+The migration scripts are in the folder `server/migrations`
+and are run in alphabetical order, hence the scripts all start with the timestamp
+of their creation. For this project we are only using one script for each
+phase of the project.
+
+For the [initial phase without RTC](server/migrations/20210525072953_setup.js) the database design looks like this:
+
+#### `users` table
+
+| Column   | Type   |  Description                                                 |
+|----------|--------|--------------------------------------------------------------|
+| username | string | The username for logging in to the application.              |
+| hash     | string | The salt and hash of the users password created by `bcrypt`. |
+| fullName | string | The display name of the user.                                |
+
+#### `documents` table
+
+| Column   | Type   |  Description                                                          |
+|----------|--------|-----------------------------------------------------------------------|
+| uuid     | uuid   | The universally unique identifier for the document.                   |
+| title    | string | The human readable title of the document.                             |
+| content  | string | The content of the document.                                          |
+| lockUser | string | The user which currently has exclusive write access to the document.  |
+| lockTime | string | The last time that the locking user requested exclusive write access. |
+
+#### `collaborators` table
+
+| Column      | Type    |  Description                                  |
+|-------------|---------|-----------------------------------------------|
+| document    | uuid    | The document's universally unique identifier. |
+| user        | string  | The user's username.                          |
+| permissions | integer | The permissions stored as a bitset.           |
+
+### Routes in `api.js`
+The most important part of the server is the [API routes](server/routes/api.js) that are defined to handle
+all the different parts of the application.
+
+| Route            | Method |  Description                                             |
+|:-----------------|--------|----------------------------------------------------------|
+| /                | GET    | The interactive documentation for the API.               |
+| /jwt             | POST   | Login and create a JSON web token to represent the user. |
+| /users           | GET    | Get a list of all usernames on the server.               |
+| /users           | POST   | Create a new user.                                       |
+| /users/:username | GET    | Get the user details, in this case a full name.          |
+| /documents       | GET    | Get a list of all documents the user can access.         |
+| /documents       | POST   | Create a new document.                                   |
+
+
+
+
 # Setup steps
 
 ## Server
