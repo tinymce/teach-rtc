@@ -3,8 +3,13 @@ import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
 import { useCollaborators, useDocumentAutosave, useDocumentInitialValue, useDocumentLock, useDocumentTitle } from '../api/api';
 
+// This is heavily based on the basic example
+// https://www.tiny.cloud/docs/demo/basic-example/
+// minus some plugins not supported by RTC.
 const config = {
   height: 800,
+  // currently RTC only supports a limited set of plugins
+  // https://www.tiny.cloud/docs/rtc/introduction/#rtcenabledfeatures
   plugins: [
     'advlist lists link image charmap print visualblocks',
     'insertdatetime help wordcount'
