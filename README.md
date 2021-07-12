@@ -9,9 +9,27 @@ each other.
 This repository shows the before and after stages of applying RTC to a simple
 collaborative document editing system.
 
+- [About the repository](#abouttherepository)
+   - [Server](#aboutserver)
+      - [Express Application](#expressapp)
+      - [Database](#database)
+      - [Interactive API Documentation](#interactiveapi)
+   - [Client](#aboutclient)
+      - [Managing login using JSON web tokens](#aboutlogin)
+      - [Components, pages and modals](#aboutcomponentspagesmodals)
+- [Setup Steps](#setupsteps)
+   - [Server](#setupserver)
+   - [Cloud](#setupcloud)
+   - [Client](#setupclient)
+
+
+<a id="abouttherepository"></a>
+
 # About the repository
 
 This project is split into client and server. 
+
+<a id="aboutserver"></a>
 
 ## Server
 The server was created with the
@@ -36,6 +54,8 @@ The server application is started by the node script in
 It then loads the main script [`server/app.js`](server/app.js) which sets up
 how express handles requests.
 
+<a id="expressapp"></a>
+
 ### Express `app.js`
 The [`app.js`](server/app.js) does the following:
 1. Loads settings from `.env` and `.env.local`, these can also be specified as environment variables.
@@ -56,6 +76,7 @@ The [`app.js`](server/app.js) does the following:
 9. Registers the routes.
 10. Exports the app.
 
+<a id="database"></a>
 
 ### Database
 The database is accessed through the [`knex`](https://knexjs.org/) query builder
@@ -114,10 +135,70 @@ all the different parts of the application.
 | /documents       | GET    | Get a list of all documents the user can access.         |
 | /documents       | POST   | Create a new document.                                   |
 
+<a id="interactiveapi"></a>
 
+### Interactive API documentation
+After following the server setup steps below and starting the server open the URL `http://localhost:3001/api/` to view interactive documentation. 
 
+Note that this documentation is defined in the file [`server/docs/swagger.json`](server/docs/swagger.json).
+
+<a id="aboutclient"></a>
+
+## Client
+
+The client was created with the tool `create-react-app`. The `.git` folder and
+ `.gitignore` created by the script was removed in favor of the one in the parent directory.
+
+The following packages were added:
+- `@tinymce/tinymce-react` - to load TinyMCE as a react component.
+- `axios` - to handle requesting
+- `bootstrap` - to supply styling.
+- `jquery` - to allow interactive parts from `bootstrap`
+- `jsonwebtoken` - to decode JSON web tokens to extract the user and expiry time.
+- `popper.js` - to handle popups in `bootstrap`
+- `react-bootstrap` - to supply components for creating the website.
+- `react-router-bootstrap` - to supply some replacement components from `react-router-dom` that work with `bootstrap`.
+- `react-router-dom` - to handle navigation without page loads.
+
+<a id="aboutlogin"></a>
+
+### Managing login using JSON web tokens
+
+The application uses JSON web tokens to store who is the logged in user. 
+When these are retrieved after login they are stored in 
+[local storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+and retrieved whenever the page is reloaded. These are automatically removed
+when the expiry time on the token is reached.
+
+Additionally the application makes use of the default headers setting on axios
+to send the JSON web token with every request without having to manually pass
+the token.
+
+<a id="aboutcomponentspagesmodals"></a>
+
+### Components, pages and modals
+The application is made up of 4 pages, 3 modals and a common component to provide navigation
+between each of the pages.
+
+#### Components
+- [`Navigation.js`](client/src/components/Navigation.js) - A navigation bar shared between pages.
+
+#### Pages
+- [`DocumentEdit.js`](client/src/pages/DocumentEdit.js) - A page using TinyMCE which is used for viewing and editing the document.
+- [`DocumentList.js`](client/src/pages/DocumentList.js) - A page which shows a list of all documents available to the currently logged-in user.
+- [`LoginRegister.js`](client/src/pages/LoginRegister.js) - A page which allows new users to register or to log-in to use the rest of the site.
+- [`Logout.js`](client/src/pages/Logout.js) - A page which simply logs out the user and redirects to the login page.
+
+#### Modals
+- [`EditCollaboratorModal.js`](client/src/modals/EditCollaboratorModal.js) - a modal used to change the access role of a collaborator.
+- [`NewCollaboratorModal.js`](client/src/modals/NewCollaboratorModal.js) - a modal used to add a new collaborator.
+- [`NewDocModal.js`](client/src/modals/NewDocModal.js) - a modal used to create a new document.
+
+<a id="setupsteps"></a>
 
 # Setup steps
+
+<a id="setupserver"></a>
 
 ## Server
 The following commands are run from the subfolder `server`.
@@ -166,6 +247,8 @@ nodemon start
 ```
 as it will automatically restart if you make changes.
 
+<a id="setupcloud"></a>
+
 ## TinyMCE cloud account
 
 ### Create cloud account
@@ -177,6 +260,8 @@ and note the API key for a later step.
 
 Register the public key that was generated previously at
 https://www.tiny.cloud/my-account/jwt/ .
+
+<a id="setupclient"></a>
 
 ## Client
 The following commands are run from the subfolder `client`.
