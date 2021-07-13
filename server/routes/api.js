@@ -7,25 +7,57 @@ const passport = require('passport');
 const uuidV4 = require('uuid').v4;
 const { DateTime } = require("luxon");
 
+// Open API v3 docs
+// When the server is running these can be viewed at http://localhost:3001/api/
 const swaggerDocument = require('../docs/swagger.json');
 
 // helpers
-const PERMISSION_MANAGE = 4;
-const PERMISSION_WRITE = 2;
-const PERMISSION_READ = 1;
 
+// The access that a user has to a document is stored as a bitset where each
+// role has a combination of different capabilities.
+const PERMISSION_MANAGE = 4; // 0100
+const PERMISSION_WRITE = 2;  // 0010
+const PERMISSION_READ = 1;   // 0001
+
+/**
+ * Each role is then equivalent to a number as given by bitwise OR of the capabilities.
+ */
 const ROLES = {
-  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ,
-  'edit': PERMISSION_WRITE | PERMISSION_READ,
-  'view': PERMISSION_READ,
-  'none': 0
+  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ, // 0111 = 7
+  'edit': PERMISSION_WRITE | PERMISSION_READ,                       // 0011 = 3
+  'view': PERMISSION_READ,                                          // 0001 = 1
+  'none': 0                                                         // 0000 = 0
 };
 
-ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
-ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
+/**
+ * A mapping from the bitset number representing the capabilities to the role name.
+ * @type {Record.<number, string>}
+ */
+const ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
 
+/**
+ * A list of the role names sorted by most powerful ('manage') to least powerful ('none').
+ * @type {(keyof typeof ROLES)[]} 
+ */ 
+const ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
+
+/**
+ * Given any number try to find an exact match to a role, when that is not possible find the most powerful role that is fulfilled by the access permissions.
+ * @param {number} permissions 
+ * @returns {keyof typeof ROLES}
+ */
 const permissionsToRole = (permissions) => ROLES_LOOKUP[permissions] ?? ROLE_ORD.find((r) => (permissions & ROLES[r]) === ROLES[r]) ?? 'none';
 
+/**
+ * Given a request get the permissions that the logged-in user has for the current document.
+ * 
+ * Assumes that the user has been authenticated with the username in the
+ * req.user value and that the document UUID is in the path of the request
+ * named documentUuid.
+ * 
+ * @param {Express.Request} req the express request object.
+ * @returns {Promise.<number>} promise that resolves to the permissions.
+ */
 const getPermissions = async (req) => {
   const user = req.user;
   const document = req.params.documentUuid;
@@ -40,8 +72,16 @@ const getPermissions = async (req) => {
   return rows.length === 1 ? rows[0].permissions : 0;
 };
 
-// middle-ware
+// Express Middleware
+
+/**
+ * Middleware to authenticate the user and return a JSON response on failure.
+ * @param {Express.Request} req the express request object.
+ * @param {Express.Response} res the express response object.
+ * @param {(err: any?) => void} next pass on to express' next handler.
+ */
 const isAuthenticated = (req, res, next) => {
+  // the `session: false` instructs passport not to create a session cookie
   passport.authenticate('jwt', { session: false }, (err, user, info) => {
     if (err) {
       return next(err);
@@ -54,6 +94,12 @@ const isAuthenticated = (req, res, next) => {
   })(req, res, next);
 };
 
+/**
+ * Construct middleware to check if a user has the expected permission.
+ * @see getPermissions for assumptions.
+ * @param {number} permission the permission to check for.
+ * @returns {(req: Express.Request, res: Express.Response, next: (err: any?) => void) => Promise.<void>} Middleware to check if the user has the passed permission.
+ */
 const hasPermission = (permission) => async (req, res, next) => {
   const permissions = await getPermissions(req);
   if (permissions === 0 || (permissions & permission) !== permission) {
@@ -62,10 +108,36 @@ const hasPermission = (permission) => async (req, res, next) => {
   next();
 };
 
+/**
+ * Middleware to check if the user has the manage permission on the document.
+ * @see getPermissions for assumptions.
+ */
 const hasManagePermission = hasPermission(PERMISSION_MANAGE);
+
+/**
+ * Middleware to check if the user has the write permission on the document.
+ * @see getPermissions for assumptions.
+ */
 const hasWritePermission = hasPermission(PERMISSION_WRITE);
+
+/**
+ * Middleware to check if the user has the read permission on the document.
+ * @see getPermissions for assumptions.
+ */
 const hasReadPermission = hasPermission(PERMISSION_READ);
 
+/**
+ * Middleware to check if the user has the lock on the document.
+ * 
+ * Assumes that the user has been authenticated with the username in the
+ * req.user value and that the document UUID is in the path of the request
+ * named documentUuid.
+ * 
+ * @param {Express.Request} req the express request object.
+ * @param {Express.Response} res the express response object.
+ * @param {(err: any?) => void} next pass on to express' next handler.
+ * @returns {Promise.<void>} promise that resolves when complete.
+ */
 const hasLock = async (req, res, next) => {
   const user = req.user;
   const uuid = req.params.documentUuid;
