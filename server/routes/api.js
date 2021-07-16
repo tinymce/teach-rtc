@@ -294,7 +294,10 @@ router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermissi
     res.status(400).json({ success: false, message: 'The version must be a positive integer.' });
     return;
   }
-  // update the document content
+  // update the document content when a new version is provided by RTC.
+  // Note that RTC takes care of merging changes of multiple users and ensures
+  // that the version number always increments so the integration only needs to
+  // store new versions.
   await req.db('documents').where('uuid', req.params.documentUuid).andWhere('version', '<', version).update({ content, version });
   // return success
   res.status(200).json({ success: true });
