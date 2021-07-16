@@ -60,6 +60,7 @@ export default function DocumentEdit({ token }) {
           plugins: 'rtc ' + config.plugins,
           // RTC uses a unique ID to identify documents which is provided
           // by your application.
+          // This setting is required.
           rtc_document_id: documentId,
           // To ensure privacy of your content the RTC plugin encrypts all
           // messages that need to be sent to the RTC server.
@@ -67,6 +68,7 @@ export default function DocumentEdit({ token }) {
           // request by the RTC plugin.
           // The server never has access to the encryption key so it can't view
           // the contents of the document.
+          // This setting is required.
           rtc_encryption_provider: getSecretKey,
           // The future plan for RTC is that users will be authorized to view
           // or edit documents with JSON web tokens that contain claims
@@ -75,6 +77,7 @@ export default function DocumentEdit({ token }) {
           // Currently the only requirement is that the JWT is signed by a 
           // key pair that is registered with the TinyMCE cloud account to 
           // prove it has access.
+          // This setting is required.
           rtc_token_provider: () => getJwt({ documentId }),
           // The first time that RTC loads on a document when it hasn't seen
           // the document ID before it will get the starting content from your
@@ -82,25 +85,35 @@ export default function DocumentEdit({ token }) {
           // All later times the encrypted snapshots and messages will be 
           // retrieved from the RTC server and replayed on the client to
           // recreate the document content.
+          // This setting is optional. If not provided then the content
+          // will come from the textarea the editor is initialized on.
           rtc_initial_content_provider: getContent,
           // The RTC plugin periodically calls this function to allow
           // integrators to save the document. The version number
           // provided allows the integrator to tell old and new snapshots apart.
+          // This setting is optional though strongly recommended. Leaving out
+          // this setting is only really possible on prototypes as it is the only
+          // way the editor content can be saved.
           rtc_snapshot: saveSnapshot,
           // The RTC plugin calls this function when it encounters a new user.
           // This provides the full name of the user by default but any information
           // that can be encoded as JSON can be passed.
+          // This setting is optional. If not provided then users will be
+          // identified by their ID.
           rtc_user_details_provider: getUserDetails,
           // The RTC plugin calls this method when a client connects.
           // This includes the details from the rtc_user_details_provider and
           // the extra data provided to rtc_client_info.
+          // This setting is optional.
           rtc_client_connected: clientConnected,
           // The RTC plugin calls this method when a client disconnects.
           // This includes the details from the rtc_user_details_provider and
           // the extra data provided to rtc_client_info.
+          // This setting is optional.
           rtc_client_disconnected: clientDisconnected,
           // The RTC plugin transmits this data to all other clients.
           // The only restriction is that this must be encodable as JSON.
+          // This setting is optional.
           rtc_client_info: { isMobile },
         }}
       />
