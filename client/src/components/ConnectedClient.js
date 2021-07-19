@@ -1,17 +1,17 @@
 
 const cursorColors = ['#2dc26b', '#e03e2d', '#f1c40f', '#3598db', '#b96ad9', '#e67e23', '#aaa69d', '#f368e0'];
 
-const style = {
-  display: 'inline-block',
-  borderWidth: '1px',
-  borderStyle: 'solid',
-  padding: '0px 5px',
-  margin: '5px'
+const logos = {
+  'firefox': '/firefox.svg',
+  'chrome': '/chrome.svg',
+  'safari': '/safari.svg',
+  'edge': '/edge.svg'
 };
 
-export default function ConnectedClient({ caretNumber, fullName, isMobile }) {
+export default function ConnectedClient({ caretNumber, fullName, browser }) {
   const colour = cursorColors[caretNumber - 1];
+  const browserLogo = browser && logos[browser] ? <img alt={browser} src={process.env.PUBLIC_URL + logos[browser]} /> : null;
   return (
-    <span style={{ ...style, borderColor: colour, color: colour }}>{fullName}{isMobile ? ' 📱' : ''}</span>
+    <span className="client" style={{borderColor: colour, color: colour }}>{fullName}{browserLogo}</span>
   )
 }

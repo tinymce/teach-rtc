@@ -1,0 +1,15 @@
+.client {
+  display: inline-block;
+  white-space: nowrap;
+  border-width: 1px;
+  border-style: solid;
+  padding: 0px 5px;
+  margin: 5px;
+}
+
+.client img {
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+  margin-left: 5px;
+}

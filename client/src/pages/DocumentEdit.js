@@ -4,7 +4,8 @@ import { decode } from 'jsonwebtoken';
 import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 import { useState } from 'react';
 import ConnectedClient from '../components/ConnectedClient';
-import {isMobile} from 'react-device-detect';
+import { detect } from 'detect-browser';
+const browser = detect();
 
 /**
  * Save the editor content.
@@ -48,7 +49,7 @@ export default function DocumentEdit({ token }) {
     <>
       <h1>{title}</h1>
       <div>
-        Other connected clients: {clients.map((c) => <ConnectedClient key={c.clientId} caretNumber={c.caretNumber} fullName={c.userDetails.fullName} isMobile={c.clientInfo.isMobile}/>)}
+        Other connected clients: {clients.map((c) => <ConnectedClient key={c.clientId} caretNumber={c.caretNumber} fullName={c.userDetails.fullName} browser={c.clientInfo.browser}/>)}
       </div>
       <Editor
         key={documentId}
@@ -114,7 +115,7 @@ export default function DocumentEdit({ token }) {
           // The RTC plugin transmits this data to all other clients.
           // The only restriction is that this must be encodable as JSON.
           // This setting is optional.
-          rtc_client_info: { isMobile },
+          rtc_client_info: { browser: browser?.name },
         }}
       />
     </>
