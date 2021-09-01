@@ -14,16 +14,16 @@ const swaggerDocument = require('../docs/swagger.json');
 
 // The access that a user has to a document is stored as a bitset where each
 // access level has a combination of different capabilities.
-const PERMISSION_MANAGE = 4; // 0100
-const PERMISSION_WRITE = 2;  // 0010
+const PERMISSION_MANAGE = 8; // 1000
+const PERMISSION_WRITE = 4;  // 0100
 const PERMISSION_READ = 1;   // 0001
 
 /**
  * Each access level is then equivalent to a number as given by bitwise OR of the capabilities.
  */
 const ACCESS = {
-  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ, // 0111 = 7
-  'edit': PERMISSION_WRITE | PERMISSION_READ,                       // 0011 = 3
+  'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ, // 1101 = 13
+  'edit': PERMISSION_WRITE | PERMISSION_READ,                       // 0101 = 5
   'view': PERMISSION_READ,                                          // 0001 = 1
   'none': 0                                                         // 0000 = 0
 };
