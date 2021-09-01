@@ -3,17 +3,17 @@ import { Button, Form, Modal } from 'react-bootstrap';
 
 export default function NewCollaboratorModal({ show, title, users, onUpdate, onHide }) {
   const [username, setUsername] = useState("");
-  const [role, setRole] = useState("edit");
+  const [access, setAccess] = useState("edit");
 
   const handleHide = () => {
     onHide();
     setUsername("");
-    setRole("edit");
+    setAccess("edit");
   };
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
-    onUpdate(username, role);
+    onUpdate(username, access);
     handleHide();
   };
 
@@ -32,9 +32,9 @@ export default function NewCollaboratorModal({ show, title, users, onUpdate, onH
               {users.map((user) => <option key={user} value={user}>{user}</option>)}
             </Form.Control>
           </Form.Group>
-          <Form.Group controlId="formNewCollaboratorRole">
-            <Form.Label>Role</Form.Label>
-            <Form.Control as="select" name="role" value={role} onChange={(evt) => setRole(evt.target.value)}>
+          <Form.Group controlId="formNewCollaboratorAccess">
+            <Form.Label>Access</Form.Label>
+            <Form.Control as="select" name="access" value={access} onChange={(evt) => setAccess(evt.target.value)}>
               <option value="manage">Manager</option>
               <option value="edit">Editor</option>
               <option value="view">Viewer</option>

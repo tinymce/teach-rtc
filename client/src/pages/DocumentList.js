@@ -7,36 +7,36 @@ import NewCollaboratorModal from '../modals/NewCollaboratorModal';
 import EditCollaboratorModal from '../modals/EditCollaboratorModal';
 import { createDocument, setCollaborator, useCollaborators, useDocuments, useDocumentTitle, usePossibleCollaborators } from '../api/api';
 
-const ROLE_TEXT = {
+const ACCESS_TEXT = {
   'manage': 'Manager',
   'edit': 'Editor',
   'view': 'Viewer'
 };
 
-const ROLE_VARIANT = {
+const ACCESS_VARIANT = {
   'manage': 'primary',
   'edit': 'info',
   'view': 'secondary'
 };
 
-const Collaborator = ({ username, role, onEdit }) => {
+const Collaborator = ({ username, access, onEdit }) => {
   const editProps = (
     typeof onEdit === 'function'
       ? { action: true, onClick: onEdit }
       : {}
   );
   return (
-    <ListGroup.Item variant={ROLE_VARIANT[role]} {...editProps}>
+    <ListGroup.Item variant={ACCESS_VARIANT[access]} {...editProps}>
       {username}
-      <Badge variant={ROLE_VARIANT[role]} className="ml-1">{ROLE_TEXT[role]}</Badge>
+      <Badge variant={ACCESS_VARIANT[access]} className="ml-1">{ACCESS_TEXT[access]}</Badge>
     </ListGroup.Item>
   );
 };
 
 const Doc = ({ documentId, username }) => {
   const title = useDocumentTitle({ documentId });
-  const { collaborators, role, requestCollaborators } = useCollaborators({ documentId, username });
-  const isManager = role === 'manage';
+  const { collaborators, access, requestCollaborators } = useCollaborators({ documentId, username });
+  const isManager = access === 'manage';
   // separate out the other collaborators
   const others = collaborators.filter((c) => c.username !== username);
   // modal display flags
@@ -45,8 +45,8 @@ const Doc = ({ documentId, username }) => {
   // modal data
   const users = usePossibleCollaborators({ collaborators, needed: addCollaborator });
   // update the collaborators
-  const updateCollaborators = (username, role) => {
-    setCollaborator({ documentId, username, role })
+  const updateCollaborators = (username, access) => {
+    setCollaborator({ documentId, username, access })
       .then(() => requestCollaborators())
       .catch((e) => console.log(e.message));
   };
@@ -57,7 +57,7 @@ const Doc = ({ documentId, username }) => {
         <Link to={`/documents/${documentId}`}>{title}</Link>
       </td>
       <td>
-        <Badge variant={ROLE_VARIANT[role]}>{ROLE_TEXT[role]}</Badge>
+        <Badge variant={ACCESS_VARIANT[access]}>{ACCESS_TEXT[access]}</Badge>
       </td>
       <td>
         <ListGroup>
@@ -90,7 +90,7 @@ export default function DocumentList({ token }) {
         <thead>
           <tr>
             <th>Title</th>
-            <th>Role</th>
+            <th>Access</th>
             <th>Collaborators</th>
           </tr>
         </thead>

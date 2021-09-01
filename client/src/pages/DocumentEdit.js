@@ -25,10 +25,10 @@ export default function DocumentEdit({ token }) {
   const { documentId } = useParams();
   const { sub: username } = token ? decode(token) : {};
   const title = useDocumentTitle({ documentId });
-  const { role } = useCollaborators({ documentId, username });
-  const roleCanEdit = role === 'manage' || role === 'edit';
-  const ownsLock = useDocumentLock({ token, documentId, roleCanEdit });
-  const canEdit = roleCanEdit && ownsLock;
+  const { access } = useCollaborators({ documentId, username });
+  const accessCanEdit = access === 'manage' || access === 'edit';
+  const ownsLock = useDocumentLock({ token, documentId, accessCanEdit });
+  const canEdit = accessCanEdit && ownsLock;
   const initialValue = useDocumentInitialValue({ documentId, canEdit });
   const editorRef = useDocumentAutosave({ documentId, canSave: canEdit, initialValue });
 

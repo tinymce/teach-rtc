@@ -190,7 +190,7 @@ between each of the pages.
 - [`Logout.js`](client/src/pages/Logout.js) - A page which simply logs out the user and redirects to the login page.
 
 #### Modals
-- [`EditCollaboratorModal.js`](client/src/modals/EditCollaboratorModal.js) - a modal used to change the access role of a collaborator.
+- [`EditCollaboratorModal.js`](client/src/modals/EditCollaboratorModal.js) - a modal used to change the access of a collaborator.
 - [`NewCollaboratorModal.js`](client/src/modals/NewCollaboratorModal.js) - a modal used to add a new collaborator.
 - [`NewDocModal.js`](client/src/modals/NewDocModal.js) - a modal used to create a new document.
 

@@ -13,15 +13,15 @@ const swaggerDocument = require('../docs/swagger.json');
 // helpers
 
 // The access that a user has to a document is stored as a bitset where each
-// role has a combination of different capabilities.
+// access level has a combination of different capabilities.
 const PERMISSION_MANAGE = 4; // 0100
 const PERMISSION_WRITE = 2;  // 0010
 const PERMISSION_READ = 1;   // 0001
 
 /**
- * Each role is then equivalent to a number as given by bitwise OR of the capabilities.
+ * Each access level is then equivalent to a number as given by bitwise OR of the capabilities.
  */
-const ROLES = {
+const ACCESS = {
   'manage': PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ, // 0111 = 7
   'edit': PERMISSION_WRITE | PERMISSION_READ,                       // 0011 = 3
   'view': PERMISSION_READ,                                          // 0001 = 1
@@ -29,23 +29,23 @@ const ROLES = {
 };
 
 /**
- * A mapping from the bitset number representing the capabilities to the role name.
+ * A mapping from the bitset number representing the capabilities to the access level.
  * @type {Record.<number, string>}
  */
-const ROLES_LOOKUP = Object.fromEntries(Object.entries(ROLES).map(entry => entry.reverse()));
+const ACCESS_LOOKUP = Object.fromEntries(Object.entries(ACCESS).map(entry => entry.reverse()));
 
 /**
- * A list of the role names sorted by most powerful ('manage') to least powerful ('none').
- * @type {(keyof typeof ROLES)[]} 
+ * A list of the access levels sorted by most powerful ('manage') to least powerful ('none').
+ * @type {(keyof typeof ACCESS)[]} 
  */ 
-const ROLE_ORD = Object.keys(ROLES).sort((a, b) => ROLES[b] - ROLES[a]);
+const ACCESS_ORD = Object.keys(ACCESS).sort((a, b) => ACCESS[b] - ACCESS[a]);
 
 /**
- * Given any number try to find an exact match to a role, when that is not possible find the most powerful role that is fulfilled by the access permissions.
+ * Given any number try to find an exact match to a access level, when that is not possible find the most powerful access level that is fulfilled by the permissions.
  * @param {number} permissions 
- * @returns {keyof typeof ROLES}
+ * @returns {keyof typeof ACCESS}
  */
-const permissionsToRole = (permissions) => ROLES_LOOKUP[permissions] ?? ROLE_ORD.find((r) => (permissions & ROLES[r]) === ROLES[r]) ?? 'none';
+const permissionsToAccess = (permissions) => ACCESS_LOOKUP[permissions] ?? ACCESS_ORD.find((r) => (permissions & ACCESS[r]) === ACCESS[r]) ?? 'none';
 
 /**
  * Given a request get the permissions that the logged-in user has for the current document.
@@ -358,10 +358,10 @@ router.get('/documents/:documentUuid/collaborators', isAuthenticated, hasReadPer
   const rows = await req.db.select('user', 'permissions').from('collaborators').
     where('document', req.params.documentUuid).
     orderBy([{ column: 'permissions', order: 'desc' }, { column: 'user', order: 'asc' }]);
-  // convert the user permissions into roles
+  // convert the user permissions into access levels
   const collaborators = rows.map(({ user, permissions }) => ({
     username: user,
-    role: permissionsToRole(permissions)
+    access: permissionsToAccess(permissions)
   }));
   // return the collaborators
   res.json({ success: true, collaborators });
@@ -375,17 +375,17 @@ router.put('/documents/:documentUuid/collaborators/:username', isAuthenticated, 
   if (typeof user !== 'string' && /^[a-zA-Z0-9~_.-]+$/.test(user)) {
     return res.status(400).json({ success: false, message: 'The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ .' });
   }
-  const role = req.body.role;
-  if (!Object.keys(ROLES).includes(role)) {
-    return res.status(400).json({ success: false, message: 'The role must be one of: "' + ROLE_ORD.join('", "') + '".' });
+  const access = req.body.access;
+  if (!Object.keys(ACCESS).includes(access)) {
+    return res.status(400).json({ success: false, message: 'The access must be one of: "' + ACCESS_ORD.join('", "') + '".' });
   }
   // check that the specified user actually exists
   const userExists = await req.db.select('*').from('users').where('username', user);
   if (userExists.length !== 1) {
     return res.status(400).json({ success: false, message: 'The username does not refer to a user that exists.' });
   }
-  // get the numerical value of the role
-  const permissions = ROLES[role];
+  // get the numerical value of the access
+  const permissions = ACCESS[access];
   // check if a collaborator record exists
   const existing = await req.db.select('*').from('collaborators').where({ 'document': req.params.documentUuid, 'user': user });
   // update, delete or create the collaborator record

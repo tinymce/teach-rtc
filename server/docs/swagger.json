@@ -239,17 +239,17 @@
           }
         }
       },
-      "SetRoleSuccess": {
-        "description": "Successfully set the role.",
+      "SetAccessSuccess": {
+        "description": "Successfully set the access.",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SetRoleResp"
+              "$ref": "#/components/schemas/SetAccessResp"
             }
           }
         }
       },
-      "SetRoleValidation": {
+      "SetAccessValidation": {
         "description": "Inputs failed validation.",
         "content": {
           "application/json": {
@@ -259,7 +259,7 @@
                   "$ref": "#/components/schemas/InvalidUsername"
                 },
                 {
-                  "$ref": "#/components/schemas/InvalidRole"
+                  "$ref": "#/components/schemas/InvalidAccess"
                 },
                 {
                   "$ref": "#/components/schemas/UserUnknown"
@@ -321,7 +321,7 @@
         "type": "string",
         "example": "4617bc72-686e-4090-9722-a136509d7ab8"
       },
-      "Role": {
+      "Access": {
         "type": "string",
         "enum": [
           "manage",
@@ -337,8 +337,8 @@
           "username": {
             "$ref": "#/components/schemas/Username"
           },
-          "role": {
-            "$ref": "#/components/schemas/Role"
+          "access": {
+            "$ref": "#/components/schemas/Access"
           }
         }
       },
@@ -431,7 +431,7 @@
         },
         "additionalProperties": false
       },
-      "InvalidRole": {
+      "InvalidAccess": {
         "type": "object",
         "properties": {
           "success": {
@@ -440,7 +440,7 @@
           },
           "message": {
             "type": "string",
-            "example": "The role must be one of: \"manage\", \"edit\", \"view\", \"none\"."
+            "example": "The access must be one of: \"manage\", \"edit\", \"view\", \"none\"."
           }
         },
         "additionalProperties": false
@@ -744,15 +744,15 @@
           }
         }
       },
-      "SetRoleReq": {
+      "SetAccessReq": {
         "type": "object",
         "properties": {
-          "role": {
-            "$ref": "#/components/schemas/Role"
+          "access": {
+            "$ref": "#/components/schemas/Access"
           }
         }
       },
-      "SetRoleResp": {
+      "SetAccessResp": {
         "type": "object",
         "properties": {
           "success": {
@@ -1111,17 +1111,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetRoleReq"
+                "$ref": "#/components/schemas/SetAccessReq"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/SetRoleSuccess"
+            "$ref": "#/components/responses/SetAccessSuccess"
           },
           "400": {
-            "$ref": "#/components/responses/SetRoleValidation"
+            "$ref": "#/components/responses/SetAccessValidation"
           },
           "401": {
             "$ref": "#/components/responses/AuthorizationCheckFailed"

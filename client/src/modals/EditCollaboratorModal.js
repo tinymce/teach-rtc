@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 
 export default function EditCollaboratorModal({ title, collaborator, onUpdate, onHide }) {
-  const [role, setRole] = useState(collaborator?.role);
-  useEffect(() => setRole(collaborator?.role), [collaborator]);
+  const [access, setAccess] = useState(collaborator?.access);
+  useEffect(() => setAccess(collaborator?.access), [collaborator]);
 
   const handleHide = () => onHide();
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
-    onUpdate(collaborator?.username, role);
+    onUpdate(collaborator?.username, access);
     handleHide();
   };
 
@@ -25,9 +25,9 @@ export default function EditCollaboratorModal({ title, collaborator, onUpdate, o
             <Form.Label>Username</Form.Label>
             <Form.Control type="text" value={collaborator?.username} readOnly/>
           </Form.Group>
-          <Form.Group controlId="formNewCollaboratorRole">
-            <Form.Label>Role</Form.Label>
-            <Form.Control as="select" name="role" value={role} onChange={(evt) => setRole(evt.target.value)}>
+          <Form.Group controlId="formNewCollaboratorAccess">
+            <Form.Label>Access</Form.Label>
+            <Form.Control as="select" name="access" value={access} onChange={(evt) => setAccess(evt.target.value)}>
               <option value="manage">Manager</option>
               <option value="edit">Editor</option>
               <option value="view">Viewer</option>

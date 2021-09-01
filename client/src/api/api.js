@@ -9,15 +9,15 @@ const VIEW_POLL_TIME = 5000;
 const AUTOSAVE_TIME = VIEW_POLL_TIME;
 
 /**
- * A collaborator role.
- * @typedef {'manage' | 'edit' | 'view' | 'none'} Role
+ * A collaborator access.
+ * @typedef {'manage' | 'edit' | 'view' | 'none'} Access
  */
 
 /**
  * A collaborator.
  * @typedef {object} Collaborator
  * @property {string} username the collaborator username.
- * @property {Role} role the collaborator role.
+ * @property {Access} access the collaborator access.
  */
 
 /**
@@ -126,15 +126,15 @@ export const getCollaborators = async ({ documentId }) => {
 };
 
 /**
- * Sets the role of a collaborator.
+ * Sets the access of a collaborator.
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
  * @param {string} inputs.username the username.
- * @param {Role} inputs.role the role.
+ * @param {Access} inputs.access the access.
  * @returns {Promise.<{success: true}>} promise that resolves on success.
  */
-export const setCollaborator = async ({ documentId, username, role }) => {
-  const { data } = await axios.put(`/documents/${documentId}/collaborators/${username}`, { role });
+export const setCollaborator = async ({ documentId, username, access }) => {
+  const { data } = await axios.put(`/documents/${documentId}/collaborators/${username}`, { access });
   if (!data.success) {
     throw new Error(data.message);
   }
@@ -237,25 +237,25 @@ export const useDocumentTitle = ({ documentId }) => {
 };
 
 /**
- * Hook to get the list of collaborators on a document and the role of the current user.
+ * Hook to get the list of collaborators on a document and the access of the current user.
  * Also returns a method to trigger a refresh of the collaborators list.
  * @param {object} inputs the inputs. 
  * @param {string} inputs.documentId the document ID.
  * @param {string} inputs.username the username of the current user.
- * @returns {{collaborators: Collaborator[], role: Role, requestCollaborators: () => void}} the collaborators and the role the user has.
+ * @returns {{collaborators: Collaborator[], access: Access, requestCollaborators: () => void}} the collaborators and the access the user has.
  */
 export const useCollaborators = ({ documentId, username }) => {
   const [tick, setTick] = useState(0);
   const [collaborators, setCollaborators] = useState([]);
-  const [role, setRole] = useState(undefined);
+  const [access, setAccess] = useState(undefined);
   useEffect(() => {
     getCollaborators({ documentId }).then(({ collaborators }) => {
       setCollaborators(collaborators);
-      setRole((collaborators.find((c) => c.username === username) ?? {}).role);
+      setAccess((collaborators.find((c) => c.username === username) ?? {}).access);
     }).catch((e) => console.log(e.message));
   }, [documentId, username, tick]);
   const requestCollaborators = () => setTick((prev) => prev + 1);
-  return { collaborators, role, requestCollaborators };
+  return { collaborators, access: access, requestCollaborators };
 };
 
 /**
@@ -283,10 +283,10 @@ export const usePossibleCollaborators = ({ collaborators, needed }) => {
  * @param {object} inputs the inputs.
  * @param {string} inputs.token the JWT token representing the currently logged in user.
  * @param {string} inputs.documentId the document ID.
- * @param {boolean} inputs.roleCanEdit can the current user edit the document.
+ * @param {boolean} inputs.accessCanEdit can the current user edit the document.
  * @returns {boolean} true if the current user owns the lock on the document.
  */
-export const useDocumentLock = ({ token, documentId, roleCanEdit }) => {
+export const useDocumentLock = ({ token, documentId, accessCanEdit }) => {
   const [ownsLock, setOwnsLock] = useState(false);
   useEffect(() => {
     // helper to request the lock
@@ -297,7 +297,7 @@ export const useDocumentLock = ({ token, documentId, roleCanEdit }) => {
     const releaseLock = () => updateLock({ documentId, release: true })
       .catch((e) => console.log(e.message));
     // only try to get the lock if the user is able to edit
-    if (roleCanEdit) {
+    if (accessCanEdit) {
       if (!ownsLock) {
         // attempt to acquire lock every second until we succeed
         requestLock();
@@ -316,7 +316,7 @@ export const useDocumentLock = ({ token, documentId, roleCanEdit }) => {
     } else {
       setOwnsLock(false);
     }
-  }, [token, documentId, roleCanEdit, ownsLock]);
+  }, [token, documentId, accessCanEdit, ownsLock]);
   // return our current lock status
   return ownsLock;
 };
