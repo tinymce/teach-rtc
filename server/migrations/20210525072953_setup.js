@@ -14,7 +14,7 @@ exports.up = function(knex) {
     table.string('content').notNullable().defaultTo('');
     table.string('lockUser');
     table.datetime('lockTime');
-    table.foreign('lockUser').references('users.username').onDelete('CASCADE').onUpdate('RESTRICT');
+    table.foreign('lockUser').references('users.username').onDelete('SET NULL').onUpdate('CASCADE');
   })
   .createTable('collaborators', table => {
     table.string('document').notNullable();
@@ -25,8 +25,8 @@ exports.up = function(knex) {
     // 1 = may read
     table.integer('permissions').unsigned().notNullable();
     table.primary(['document', 'user']);
-    table.foreign('document').references('documents.uuid').onDelete('CASCADE').onUpdate('RESTRICT');
-    table.foreign('user').references('users.username').onDelete('CASCADE').onUpdate('RESTRICT');
+    table.foreign('document').references('documents.uuid').onDelete('CASCADE').onUpdate('CASCADE');
+    table.foreign('user').references('users.username').onDelete('CASCADE').onUpdate('CASCADE');
   });
 };
 
