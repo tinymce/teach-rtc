@@ -1,9 +1,9 @@
 # Teach RTC
 This project aims to teach how to use the TinyMCE Real-Time Collaboration plugin.
 
-Real-Time Collaboration (RTC) allows multiple users edit a document simultaneously,
+Real-Time Collaboration (RTC) allows multiple users to edit a document simultaneously,
 while automatically combining their changes. This makes it easier for integrators
-who don't have to ensure the document is locked to avoid multiple users overwriting
+since they don't need to lock the document to avoid multiple users overwriting
 each other.
 
 This repository shows the before and after stages of applying RTC to a simple
@@ -151,11 +151,11 @@ The client was created with the tool `create-react-app`. The `.git` folder and
 
 The following packages were added:
 - `@tinymce/tinymce-react` - to load TinyMCE as a react component.
-- `axios` - to handle requesting
+- `axios` - to handle requesting.
 - `bootstrap` - to supply styling.
-- `jquery` - to allow interactive parts from `bootstrap`
+- `jquery` - to allow interactive parts from `bootstrap`.
 - `jsonwebtoken` - to decode JSON web tokens to extract the user and expiry time.
-- `popper.js` - to handle popups in `bootstrap`
+- `popper.js` - to handle popups in `bootstrap`.
 - `react-bootstrap` - to supply components for creating the website.
 - `react-router-bootstrap` - to supply some replacement components from `react-router-dom` that work with `bootstrap`.
 - `react-router-dom` - to handle navigation without page loads.
