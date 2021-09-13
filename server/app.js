@@ -68,12 +68,6 @@ passport.use(new JwtStrategy(
   }
 ));
 
-// Currently we are not doing anything with the index route though
-// you could build the client and serve it here.
-const indexRouter = require('./routes/index');
-// This route contains the API.
-const apiRouter = require('./routes/api');
-
 const app = express();
 // global middleware to provide access to the database
 app.use((req, res, next) => {
@@ -95,6 +89,12 @@ app.use(cookieParser());
 
 // host everything in the public folder
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Currently we are not doing anything with the index route though
+// you could build the client and serve it here.
+const indexRouter = require('./routes/index');
+// This route contains the API.
+const apiRouter = require('./routes/api');
 
 // setup the routers
 app.use('/', indexRouter);
