@@ -42,7 +42,9 @@ export default function DocumentEdit({ token }) {
         initialValue={initialValue}
         onInit={(_evt, editor) => { editorRef.current = editor; }}
         onRemove={() => { editorRef.current = undefined; }}
-        init={config}
+        init={{
+          ...config,
+        }}
       />
     </>
   );
