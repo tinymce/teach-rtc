@@ -338,8 +338,8 @@ router.get('/documents/:documentUuid/content', isAuthenticated, hasReadPermissio
 });
 
 // store document content
-router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermission, hasLock, async function (req, res, next) {
   // get the document content from the body of the request
+router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermission, async function (req, res, next) {
   const content = req.body.content;
   // validate the content
   if (typeof content !== 'string') {

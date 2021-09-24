@@ -288,16 +288,6 @@
             }
           }
         }
-      },
-      "DocumentLockRequired": {
-        "description": "User must acquire a lock on the document.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DocumentLockRequired"
-            }
-          }
-        }
       }
     },
     "schemas": {
@@ -468,20 +458,6 @@
           "message": {
             "type": "string",
             "example": "Document either does not exist or the user does not have the permission required."
-          }
-        },
-        "additionalProperties": false
-      },
-      "DocumentLockRequired": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "message": {
-            "type": "string",
-            "example": "User must acquire a lock on the document."
           }
         },
         "additionalProperties": false
@@ -1052,9 +1028,6 @@
           },
           "403": {
             "$ref": "#/components/responses/DocumentUnknownOrForbidden"
-          },
-          "423": {
-            "$ref": "#/components/responses/DocumentLockRequired"
           }
         }
       }

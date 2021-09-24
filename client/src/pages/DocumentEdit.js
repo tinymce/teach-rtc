@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
-import { getContent, useCollaborators, useDocumentAutosave, useDocumentLock, useDocumentTitle } from '../api/api';
+import { getContent, useCollaborators, useDocumentAutosave, useDocumentTitle } from '../api/api';
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -27,8 +27,7 @@ export default function DocumentEdit({ token }) {
   const title = useDocumentTitle({ documentId });
   const { access } = useCollaborators({ documentId, username });
   const accessCanEdit = access === 'manage' || access === 'edit';
-  const ownsLock = useDocumentLock({ token, documentId, accessCanEdit });
-  const canEdit = accessCanEdit && ownsLock;
+  const canEdit = accessCanEdit;
   const editorRef = useDocumentAutosave({ documentId, canSave: canEdit });
 
   return (
