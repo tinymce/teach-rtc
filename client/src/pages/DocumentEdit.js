@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
-import { getContent, useCollaborators, useDocumentAutosave, useDocumentTitle } from '../api/api';
+import { getContent, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -28,7 +28,6 @@ export default function DocumentEdit({ token }) {
   const { access } = useCollaborators({ documentId, username });
   const accessCanEdit = access === 'manage' || access === 'edit';
   const canEdit = accessCanEdit;
-  const editorRef = useDocumentAutosave({ documentId, canSave: canEdit });
 
   return (
     <>
@@ -37,8 +36,6 @@ export default function DocumentEdit({ token }) {
         key={documentId}
         apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
         disabled={!canEdit}
-        onInit={(_evt, editor) => { editorRef.current = editor; }}
-        onRemove={() => { editorRef.current = undefined; }}
         init={{
           ...config,
 
@@ -95,6 +92,17 @@ export default function DocumentEdit({ token }) {
            * @type {(inputs: {documentId: string}) => Promise.<{content: string}>} content provider callback.
            */
           rtc_initial_content_provider: getContent,
+
+          /**
+           * The RTC plugin periodically calls this function to allow
+           * integrators to save the document. The version number
+           * provided allows the integrator to tell old and new snapshots apart.
+           * This setting is optional though strongly recommended. Leaving out
+           * this setting is only really possible on prototypes as it is the only
+           * reliable way the editor content can be saved.
+           * @type {(inputs: {documentId: string, version: number, getContent: () => string}) => void} content saving callback.
+           */
+          rtc_snapshot: ({documentId, version, getContent}) => saveContent({documentId, content: getContent()}),
         }}
       />
     </>
