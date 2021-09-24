@@ -169,26 +169,6 @@
           }
         }
       },
-      "LockDocumentSuccess": {
-        "description": "Success",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LockDocumentResp"
-            }
-          }
-        }
-      },
-      "LockDocumentValidation": {
-        "description": "Inputs failed validation.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/InvalidRelease"
-            }
-          }
-        }
-      },
       "GetDocumentTitleSuccess": {
         "description": "Success",
         "content": {
@@ -396,20 +376,6 @@
           "message": {
             "type": "string",
             "example": "The title is required."
-          }
-        },
-        "additionalProperties": false
-      },
-      "InvalidRelease": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "message": {
-            "type": "string",
-            "example": "The release option must be true or false if provided."
           }
         },
         "additionalProperties": false
@@ -660,28 +626,6 @@
           }
         }
       },
-      "LockDocumentReq": {
-        "type": "object",
-        "properties": {
-          "release": {
-            "type": "boolean",
-            "example": false
-          }
-        }
-      },
-      "LockDocumentResp": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "release": {
-            "type": "boolean",
-            "example": false
-          }
-        }
-      },
       "GetDocumentTitleResp": {
         "type": "object",
         "properties": {
@@ -915,47 +859,6 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthorizationCheckFailed"
-          }
-        }
-      }
-    },
-    "/documents/{documentUuid}/lock": {
-      "put": {
-        "tags": [
-          "Documents"
-        ],
-        "summary": "Acquire or release a lock on the document.",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/DocumentUuid"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref":"#/components/schemas/LockDocumentReq"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref":"#/components/responses/LockDocumentSuccess"
-          },
-          "400": {
-            "$ref": "#/components/responses/LockDocumentValidation"
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthorizationCheckFailed"
-          },
-          "403": {
-            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
           }
         }
       }

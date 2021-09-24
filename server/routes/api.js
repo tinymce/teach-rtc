@@ -125,34 +125,6 @@ const hasWritePermission = hasPermission(PERMISSION_WRITE);
  */
 const hasReadPermission = hasPermission(PERMISSION_READ);
 
-/**
- * Middleware to check if the user has the lock on the document.
- * 
- * Assumes that the user has been authenticated with the username in the
- * req.user value and that the document UUID is in the path of the request
- * named documentUuid.
- * 
- * @param {Express.Request} req the express request object.
- * @param {Express.Response} res the express response object.
- * @param {(err: any?) => void} next pass on to express' next handler.
- * @returns {Promise.<void>} promise that resolves when complete.
- */
-const hasLock = async (req, res, next) => {
-  const user = req.user;
-  const uuid = req.params.documentUuid;
-  if (!user) throw new Error('User must be authenticated');
-  if (uuid === undefined) throw new Error('Path must contain parameter documentUuid');
-  const oldest_valid_lock = DateTime.now().minus({ day: 1 });
-  const rows = await req.db.select('lockUser', 'lockTime').from('documents').where('uuid', uuid);
-  if (rows.length !== 1 || rows[0].lockUser !== user) {
-    return res.status(423).json({ success: false, message: 'User must acquire a lock on the document.' });
-  }
-  if (DateTime.fromISO(rows[0].lockTime) < oldest_valid_lock) {
-    return res.status(423).json({ success: false, message: 'User must re-acquire the lock on the document as it has expired.' });
-  }
-  next()
-};
-
 // API docs
 router.use('/', swaggerUi.serve);
 router.get('/', swaggerUi.setup(swaggerDocument));
@@ -276,49 +248,6 @@ router.post('/documents', isAuthenticated, async function (req, res, next) {
   await req.db.insert({ document: uuid, user: username, permissions: (PERMISSION_MANAGE | PERMISSION_WRITE | PERMISSION_READ) }).into('collaborators');
   // return the new document's UUID
   res.json({ success: true, uuid });
-});
-
-// acquire or release a document lock
-router.put('/documents/:documentUuid/lock', isAuthenticated, hasWritePermission, async function (req, res, next) {
-  // get the authenticated user and the document UUID and assert they exist (which they must due to the previous middleware)
-  const user = req.user;
-  const uuid = req.params.documentUuid;
-  if (!user) throw new Error('User must be authenticated');
-  if (uuid === undefined) throw new Error('Path must contain parameter documentUuid');
-  // get the release flag from the request body or a default
-  const release = req.body.release ?? false;
-  // validate the release flag
-  if (typeof release !== 'boolean') {
-    res.status(400).json({ success: false, message: 'The release option must be true or false if provided.' });
-    return;
-  }
-  // now check if the document lock must be acquired or released
-  if (release) {
-    // release the lock if the user holds it
-    await req.db('documents').
-      where({ uuid: uuid, lockUser: user }).
-      update({ 'lockUser': null, 'lockTime': null });
-    // we are always successful in giving up the lock, 
-    // however that does not mean that we owned it.
-    res.json({ success: true, release });
-  } else {
-    // the user wishes to acquire the lock
-    // in case there is an existing lock calculate how new it must be to be valid
-    const now = DateTime.now().toISO();
-    const oldestValidLock = DateTime.now().minus({ seconds: 60 }).toISO();
-    // attempt to acquire the lock
-    await req.db('documents').where('uuid', uuid).
-      andWhere(function () {
-        // a lock can be acquired if no-one holds it, it is already held by the user, or if the lock has expired
-        this.whereNull('lockUser').orWhere('lockUser', user).orWhere('lockTime', '<', oldestValidLock)
-      }).
-      update({ 'lockUser': user, 'lockTime': now });
-    // check if the user succeeded in acquiring the lock
-    const rows = await req.db.select('lockUser').from('documents').where('uuid', uuid);
-    const success = rows.length === 1 && rows[0].lockUser === user;
-    // note that failure to acquire the lock is not an error so we still return status 200
-    res.json({ success, release });
-  }
 });
 
 // get document title
