@@ -73,6 +73,18 @@ export default function DocumentEdit({ token }) {
            * @type {(inputs: {documentId: string}) => Promise.<{token: string}>} token provider callback.
            */
           rtc_token_provider: ({documentId}) => Promise.resolve({token}),
+
+          /**
+           * To ensure privacy of your content the RTC plugin encrypts all
+           * messages that need to be sent to the RTC server.
+           * The key to encrypt the messages is provided by your application on
+           * request by the RTC plugin.
+           * The server never has access to the encryption key so it can't view
+           * the contents of the document.
+           * This setting is required.
+           * @type {(inputs: {documentId: string, keyHint: string | null}) => Promise.<{key: string, keyHint: string}>} key provider callback.
+           */
+          rtc_encryption_provider: ({documentId, keyHint}) => Promise.resolve({key: 'This is not secure. Fix me!', keyHint: '1970-01-01T00:00:00.000Z'}),
         }}
       />
     </>
