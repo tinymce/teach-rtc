@@ -59,6 +59,20 @@ export default function DocumentEdit({ token }) {
            * @type {string} unique document ID.
            */
           rtc_document_id: documentId,
+
+          /**
+           * 
+           * RTC uses a JWT to identify clients which must be provided on request
+           * by your application.
+           * RTC requires that the returned JWT is valid and signed by a keypair
+           * that has been registered with the cloud account for the API key in
+           * use.
+           * It is preferred that the returned JWT has a short expiry, is specific 
+           * to a single document and specifies the user's role using additional claims.
+           * This setting is required.
+           * @type {(inputs: {documentId: string}) => Promise.<{token: string}>} token provider callback.
+           */
+          rtc_token_provider: ({documentId}) => Promise.resolve({token}),
         }}
       />
     </>
