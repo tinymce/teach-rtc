@@ -1,0 +1,1136 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Teach RTC",
+    "description": "A sample application showing multi-user editing.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "components": {
+    "parameters": {
+      "DocumentUuid": {
+        "description": "Document universally unique identifier",
+        "in": "path",
+        "name": "documentUuid",
+        "schema": {
+          "$ref": "#/components/schemas/DocumentUuid"
+        },
+        "required": true
+      },
+      "Username": {
+        "description": "User name",
+        "in": "path",
+        "name": "username",
+        "schema": {
+          "$ref":"#/components/schemas/Username"
+        },
+        "required": true
+      }
+    },
+    "responses": {
+      "LoginSuccess": {
+        "description": "Successfully created JWT.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginResp"
+            }
+          }
+        }
+      },
+      "LoginValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidPassword"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "LoginFailure": {
+        "description": "Username or password incorrect.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginFailure"
+            }
+          }
+        }
+      },
+      "ListUsersSuccess": {
+        "description": "Successfully got the list of users.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ListUsersResp"
+            }
+          }
+        }
+      },
+      "CreateUserSuccess": {
+        "description": "Successfully created a user.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateUserResp"
+            }
+          }
+        }
+      },
+      "GetUserSuccess": {
+        "description": "Successfully got details about a user.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetUserResp"
+            }
+          }
+        }
+      },
+      "CreateUserValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidPassword"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidFullName"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "CreateUserConflict": {
+        "description": "Username is already in use.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateUserConflict"
+            }
+          }
+        }
+      },
+      "GetUserNotFound": {
+        "description": "The user was not found in the database.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetUserNotFound"
+            }
+          }
+        }
+      },
+      "ListDocumentsSuccess": {
+        "description": "Successfully listed documents.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ListDocumentsResp"
+            }
+          }
+        }
+      },
+      "CreateDocumentSuccess": {
+        "description": "Successfully created a new document.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateDocumentResp"
+            }
+          }
+        }
+      },
+      "CreateDocumentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidTitle"
+            }
+          }
+        }
+      },
+      "LockDocumentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LockDocumentResp"
+            }
+          }
+        }
+      },
+      "LockDocumentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidRelease"
+            }
+          }
+        }
+      },
+      "GetDocumentTitleSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentTitleResp"
+            }
+          }
+        }
+      },
+      "GetDocumentContentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentContentResp"
+            }
+          }
+        }
+      },
+      "UpdateDocumentContentSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateDocumentContentResp"
+            }
+          }
+        }
+      },
+      "UpdateDocumentContentValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidContent"
+            }
+          }
+        }
+      },
+      "GetCollaboratorsSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetCollaboratorsResp"
+            }
+          }
+        }
+      },
+      "SetAccessSuccess": {
+        "description": "Successfully set the access.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetAccessResp"
+            }
+          }
+        }
+      },
+      "SetAccessValidation": {
+        "description": "Inputs failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf":[
+                {
+                  "$ref": "#/components/schemas/InvalidUsername"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidAccess"
+                },
+                {
+                  "$ref": "#/components/schemas/UserUnknown"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "AuthorizationCheckFailed": {
+        "description": "The authorization check failed due to a missing or invalid JWT bearer token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthorizationCheckFailed"
+            }
+          }
+        }
+      },
+      "DocumentUnknownOrForbidden": {
+        "description": "User is not permitted to access this document in this way (or it doesn't exist).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DocumentUnknownOrForbidden"
+            }
+          }
+        }
+      },
+      "DocumentLockRequired": {
+        "description": "User must acquire a lock on the document.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DocumentLockRequired"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Username": {
+        "type": "string",
+        "minLength": 1,
+        "example": "john.smith"
+      },
+      "Password": {
+        "type": "string",
+        "format": "password",
+        "minLength": 1,
+        "example": "correct horse battery staple"
+      },
+      "FullName": {
+        "type": "string",
+        "minLength": 1,
+        "example": "John Smith"
+      },
+      "DocumentUuid": {
+        "type": "string",
+        "example": "4617bc72-686e-4090-9722-a136509d7ab8"
+      },
+      "Access": {
+        "type": "string",
+        "enum": [
+          "manage",
+          "edit",
+          "view",
+          "none"
+        ],
+        "example": "manage"
+      },
+      "Collaborator": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "$ref": "#/components/schemas/Username"
+          },
+          "access": {
+            "$ref": "#/components/schemas/Access"
+          }
+        }
+      },
+      "JWT": {
+        "type": "string",
+        "description": "JWT token",
+        "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjM5OTg1MzksImV4cCI6MTYyNDA4NDkzOSwic3ViIjoiam9obi5zbWl0aCJ9.QImDfhGwmH79UU6je7UHzMSLzXZcDml1shCWGZuj0Ovqxv6Y0YZUpj2QNlhzLnBlQq3WMYZe1CZxgSaSq2VSEA9P22iUoOn9THzw9NJnfodEj-MyKvoP8tL2nZmW5SMSttpWVZbwun0JTq4bps0-GcH6hd9FzXUgw_YirQdMEZTYqT3Fmg2pHIt7sJsKCwx2oT2E0yiGCfH8rXDyF7HziVUcJiVNOeNA8Vxz8PMIIGGTQrlgDjRQj_WJcOxypz9HSsaxCwrsZtIp_vBEvsEe_CYEHLQ3riKTitRvUqc4LmkUrW7hGgkzo-y6E8BaTSAQ9pSJ2vW63j6FF70TPRzxZg"
+      },
+      "InvalidUsername": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The username must be a string matching the pattern /^[a-zA-Z0-9~_.-]+$/ ."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidPassword": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The password property must be a non-empty string."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidFullName": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The fullName property must be a non-empty string."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidTitle": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The title is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidRelease": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The release option must be true or false if provided."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidContent": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The content is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidAccess": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The access must be one of: \"manage\", \"edit\", \"view\", \"none\"."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorizationCheckFailed": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Not authorized"
+          }
+        }
+      },
+      "DocumentUnknownOrForbidden": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Document either does not exist or the user does not have the permission required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentLockRequired": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "User must acquire a lock on the document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserUnknown": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The username does not refer to a user that exists."
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginReq": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "$ref": "#/components/schemas/Username"
+          },
+          "password": {
+            "$ref": "#/components/schemas/Password"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "additionalProperties": false
+      },
+      "LoginResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "token": {
+            "$ref": "#/components/schemas/JWT"
+          }
+        }
+      },
+      "LoginFailure": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Incorrect username or password."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListUsersResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Username"
+            }
+          }
+        }
+      },
+      "CreateUserReq": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "$ref": "#/components/schemas/Username"
+          },
+          "password": {
+            "$ref": "#/components/schemas/Password"
+          },
+          "fullName": {
+            "$ref": "#/components/schemas/FullName"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "fullName"
+        ],
+        "additionalProperties": false
+      },
+      "CreateUserResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CreateUserConflict": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "A user already exists with that username."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetUserResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "fullName": {
+            "$ref": "#/components/schemas/FullName"
+          }
+        }
+      },
+      "GetUserNotFound": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "No user was found with that username."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListDocumentsResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentUuid"
+            }
+          }
+        }
+      },
+      "CreateDocumentReq": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "example": "My document"
+          }
+        }
+      },
+      "CreateDocumentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "uuid": {
+            "$ref": "#/components/schemas/DocumentUuid"
+          }
+        }
+      },
+      "LockDocumentReq": {
+        "type": "object",
+        "properties": {
+          "release": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "LockDocumentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "release": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "GetDocumentTitleResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "title": {
+            "type": "string",
+            "example": "My document"
+          }
+        }
+      },
+      "GetDocumentContentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "content": {
+            "type": "string",
+            "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          }
+        }
+      },
+      "UpdateDocumentContentReq": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          }
+        }
+      },
+      "UpdateDocumentContentResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "GetCollaboratorsResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "collaborators": {
+            "type": "array",
+            "items": {
+              "$ref":"#/components/schemas/Collaborator"
+            }
+          }
+        }
+      },
+      "SetAccessReq": {
+        "type": "object",
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/Access"
+          }
+        }
+      },
+      "SetAccessResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "paths": {
+    "/jwt": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate and create a JWT bearer token.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoginSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/LoginValidation"
+          },
+          "401": {
+            "$ref": "#/components/responses/LoginFailure"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List all the users.",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListUsersSuccess"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create a new user.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/CreateUserSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/CreateUserValidation"
+          },
+          "409": {
+            "$ref": "#/components/responses/CreateUserConflict"
+          }
+        }
+      }
+    },
+    "/users/{username}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get details of a user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref":"#/components/parameters/Username"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetUserSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "404": {
+            "$ref": "#/components/responses/GetUserNotFound"
+          }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "List all the documents that can be seen by the current user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListDocumentsSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Create a new document.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CreateDocumentSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/CreateDocumentValidation"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/lock": {
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Acquire or release a lock on the document.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/LockDocumentReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref":"#/components/responses/LockDocumentSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/LockDocumentValidation"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/title": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get document title.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetDocumentTitleSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/content": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get document content.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetDocumentContentSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Save document content.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDocumentContentReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UpdateDocumentContentSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/UpdateDocumentContentValidation"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          },
+          "423": {
+            "$ref": "#/components/responses/DocumentLockRequired"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/collaborators": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get all collaborators and their permissions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetCollaboratorsSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/collaborators/{username}": {
+      "put": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Change collaborator permissions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          },
+          {
+            "$ref":"#/components/parameters/Username"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAccessReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SetAccessSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/SetAccessValidation"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    }
+  }
+}
