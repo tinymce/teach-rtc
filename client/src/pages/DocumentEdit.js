@@ -44,6 +44,13 @@ export default function DocumentEdit({ token }) {
         onRemove={() => { editorRef.current = undefined; }}
         init={{
           ...config,
+
+          /*
+           * The RTC plugin is prepended here to indicate that it always loads first.
+           * The order that RTC appears in the plugin list doesn't actually matter
+           * because the editor will check for it and load it first.
+           */
+          plugins: 'rtc ' + config.plugins.join(' '),
         }}
       />
     </>
