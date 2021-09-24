@@ -224,7 +224,14 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/InvalidContent"
+              "oneOf":[ 
+                {
+                  "$ref": "#/components/schemas/InvalidContent"
+                },
+                {
+                  "$ref": "#/components/schemas/InvalidVersion"
+                }
+              ]
             }
           }
         }
@@ -417,6 +424,20 @@
           "message": {
             "type": "string",
             "example": "The content is required."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidVersion": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The version is required to be an integer."
           }
         },
         "additionalProperties": false
@@ -693,6 +714,10 @@
           "content": {
             "type": "string",
             "example": "<p>The quick brown fox jumps over the lazy dog.</p>"
+          },
+          "version": {
+            "type": "integer",
+            "example": 1
           }
         }
       },

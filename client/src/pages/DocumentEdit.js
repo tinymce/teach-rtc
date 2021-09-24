@@ -102,7 +102,7 @@ export default function DocumentEdit({ token }) {
            * reliable way the editor content can be saved.
            * @type {(inputs: {documentId: string, version: number, getContent: () => string}) => void} content saving callback.
            */
-          rtc_snapshot: ({documentId, version, getContent}) => saveContent({documentId, content: getContent()}),
+          rtc_snapshot: ({documentId, version, getContent}) => saveContent({documentId, version, content: getContent()}),
         }}
       />
     </>

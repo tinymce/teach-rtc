@@ -338,16 +338,24 @@ router.get('/documents/:documentUuid/content', isAuthenticated, hasReadPermissio
 });
 
 // store document content
-  // get the document content from the body of the request
 router.put('/documents/:documentUuid/content', isAuthenticated, hasWritePermission, async function (req, res, next) {
+  // get the document content and version from the body of the request
   const content = req.body.content;
+  const version = req.body.version;
   // validate the content
   if (typeof content !== 'string') {
     res.status(400).json({ success: false, message: 'The content is required.' });
     return;
   }
-  // update the document content
-  await req.db('documents').where('uuid', req.params.documentUuid).update({ content });
+  // validate the version
+  if (typeof version !== 'number' || !/^\d+$/.test(version)) {
+    return res.status(400).json({ success: false, message: 'The version is required to be an integer.'});
+  }
+  // update the document content when a new version is provided by RTC.
+  // Note that RTC takes care of merging changes of multiple users and ensures
+  // that the version number always increments so the integration only needs to
+  // store new versions.
+  await req.db('documents').where('uuid', req.params.documentUuid).andWhere('version', '<', version).update({ content, version });
   // return success
   res.status(200).json({ success: true });
 });
