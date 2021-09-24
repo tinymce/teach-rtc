@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
-import { useCollaborators, useDocumentAutosave, useDocumentInitialValue, useDocumentLock, useDocumentTitle } from '../api/api';
+import { getContent, useCollaborators, useDocumentAutosave, useDocumentLock, useDocumentTitle } from '../api/api';
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -29,8 +29,7 @@ export default function DocumentEdit({ token }) {
   const accessCanEdit = access === 'manage' || access === 'edit';
   const ownsLock = useDocumentLock({ token, documentId, accessCanEdit });
   const canEdit = accessCanEdit && ownsLock;
-  const initialValue = useDocumentInitialValue({ documentId, canEdit });
-  const editorRef = useDocumentAutosave({ documentId, canSave: canEdit, initialValue });
+  const editorRef = useDocumentAutosave({ documentId, canSave: canEdit });
 
   return (
     <>
@@ -39,7 +38,6 @@ export default function DocumentEdit({ token }) {
         key={documentId}
         apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
         disabled={!canEdit}
-        initialValue={initialValue}
         onInit={(_evt, editor) => { editorRef.current = editor; }}
         onRemove={() => { editorRef.current = undefined; }}
         init={{
@@ -85,6 +83,19 @@ export default function DocumentEdit({ token }) {
            * @type {(inputs: {documentId: string, keyHint: string | null}) => Promise.<{key: string, keyHint: string}>} key provider callback.
            */
           rtc_encryption_provider: ({documentId, keyHint}) => Promise.resolve({key: 'This is not secure. Fix me!', keyHint: '1970-01-01T00:00:00.000Z'}),
+
+          /**
+           * The first time that RTC loads on a document when it hasn't seen
+           * the document ID before it will get the starting content from your
+           * application.
+           * All later times the encrypted snapshots and messages will be 
+           * retrieved from the RTC server and replayed on the client to
+           * recreate the document content.
+           * This setting is optional. If not provided then the content
+           * will come from the textarea the editor is initialized on.
+           * @type {(inputs: {documentId: string}) => Promise.<{content: string}>} content provider callback.
+           */
+          rtc_initial_content_provider: getContent,
         }}
       />
     </>
