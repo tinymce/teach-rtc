@@ -51,6 +51,14 @@ export default function DocumentEdit({ token }) {
            * because the editor will check for it and load it first.
            */
           plugins: 'rtc ' + config.plugins.join(' '),
+
+          /**
+           * RTC uses a unique ID to identify documents, which must be provided
+           * by your application.
+           * This setting is required.
+           * @type {string} unique document ID.
+           */
+          rtc_document_id: documentId,
         }}
       />
     </>
