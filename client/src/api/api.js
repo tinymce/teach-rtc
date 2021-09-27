@@ -137,6 +137,26 @@ export const setCollaborator = async ({ documentId, username, access }) => {
 };
 
 /**
+ * Get the secret key and key hint associated with the document.
+ * The secret key is used by RTC to encrypt all content and messages that are
+ * sent to the RTC server. This ensures privacy as the RTC server has no way
+ * to read or recreate the content of the document.
+ * When no key hint is provided the integration is allowed to generate a new
+ * key with an associated unique key hint (for example the time of creation),
+ * however if a key hint is provided then the key that was originally issued
+ * with that hint must be returned.
+ * @param {object} inputs the inputs.
+ * @param {string} inputs.documentId the document ID.
+ * @param {string | null} inputs.keyHint the key hint is used to request a specific secret key that has been returned in the past.
+ * @returns {Promise.<{success: true, key: string, keyHint: string}>} promise that contains the secret key and hint.
+ */
+export const getSecretKey = async ({ documentId, keyHint }) => {
+  const { data } = await axios.get(`/documents/${documentId}/key`, { params: { keyHint } });
+  if (!data.success) throw new Error(data.message);
+  return data;
+};
+
+/**
  * Get the document content.
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
