@@ -2,6 +2,9 @@ import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
 import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
+import { detect } from 'detect-browser';
+/** @type {{type: string, name: string, version: string | null, os: string | null} | null} */
+const browser = detect();
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -131,6 +134,13 @@ export default function DocumentEdit({ token }) {
            * @type {(client: Client) => void} client disconnected callback.
            */
           rtc_client_disconnected: (data) => console.log('disconnected', data),
+
+          /**
+           * The RTC plugin transmits this data to all other clients.
+           * The only restriction is that this must be encodable as JSON.
+           * This setting is optional.
+           */
+          rtc_client_info: { browser: browser?.name },
         }}
       />
     </>
