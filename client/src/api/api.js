@@ -157,6 +157,18 @@ export const getSecretKey = async ({ documentId, keyHint }) => {
 };
 
 /**
+ * Get a JSON Web Token that relates specifically to this document and the role the user has.
+ * @param {object} inputs the inputs.
+ * @param {string} inputs.documentId the document ID.
+ * @returns {Promise.<{success: true, token: string}>} promise that contains the token.
+ */
+export const getJwt = async ({ documentId }) => {
+  const { data } = await axios.get(`/documents/${documentId}/jwt`);
+  if (!data.success) throw new Error(data.message);
+  return data;
+};
+
+/**
  * Get the document content.
  * @param {object} inputs the inputs.
  * @param {string} inputs.documentId the document ID.
