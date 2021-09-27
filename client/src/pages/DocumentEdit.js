@@ -61,6 +61,7 @@ export default function DocumentEdit({ token }) {
   return (
     <>
       <h1>{title}</h1>
+      {clients.map((client) => <span key={client.clientId}>{client.userDetails.fullName} - {client.clientInfo.browser}</span>)}
       <Editor
         key={documentId}
         apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
