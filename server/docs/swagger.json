@@ -188,6 +188,16 @@
           }
         }
       },
+      "GetDocumentJWTSuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentJWTResp"
+            }
+          }
+        }
+      },
       "GetDocumentKeySuccess": {
         "description": "Success",
         "content": {
@@ -690,6 +700,18 @@
           }
         }
       },
+      "GetDocumentJWTResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "token": {
+            "$ref":"#/components/schemas/JWT"
+          }
+        }
+      },
       "GetDocumentKeyResp": {
         "type": "object",
         "properties": {
@@ -948,6 +970,36 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/GetDocumentTitleSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/jwt": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get a JSON Web Token to access the document.",
+        "description": "Get a JSON Web Token that relates specifically to this document and the role the user has.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetDocumentJWTSuccess"
           },
           "401": {
             "$ref": "#/components/responses/AuthorizationCheckFailed"

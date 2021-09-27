@@ -259,6 +259,21 @@ router.get('/documents/:documentUuid/title', isAuthenticated, hasReadPermission,
   res.json({ success: true, title });
 });
 
+// get a JWT token specific to the document allowing it to be edited
+router.get('/documents/:documentUuid/jwt', isAuthenticated, hasReadPermission, async function (req, res, next) {
+  // find the access the current user has to this document
+  const access = permissionsToAccess(await getPermissions(req));
+  // get the role understood by RTC based on the access
+  const role = access === 'manage' || access === 'edit' ? 'editor' : 'viewer';
+  // sign a JSON web token specific to the document with the users access
+  const token = jwt.sign({
+    'https://claims.tiny.cloud/rtc/document': req.params.documentUuid,
+    'https://claims.tiny.cloud/rtc/role': role
+  }, process.env.PRIVATE_KEY, { subject: req.user, expiresIn: '5m', algorithm: 'RS256' });
+  // return the new JSON web token
+  res.json({ success: true, token });
+});
+
 // get the secret key used to encrypt the document
 router.get('/documents/:documentUuid/key', isAuthenticated, hasReadPermission, async function (req, res, next) {
   // get the keyHint from the query string, 
