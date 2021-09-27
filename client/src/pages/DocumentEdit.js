@@ -3,6 +3,7 @@ import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
 import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 import { detect } from 'detect-browser';
+import { useState } from 'react';
 /** @type {{type: string, name: string, version: string | null, os: string | null} | null} */
 const browser = detect();
 
@@ -31,6 +32,31 @@ export default function DocumentEdit({ token }) {
   const { access } = useCollaborators({ documentId, username });
   const accessCanEdit = access === 'manage' || access === 'edit';
   const canEdit = accessCanEdit;
+
+  /**
+   * The details of another user that is currently editing the document.
+   * @typedef {object} Client
+   * @property {string} userId the client user ID which is the `sub` field in the JWT.
+   * @property {{fullName: string}} userDetails the client details which always includes the `fullName`.
+   * @property {string} clientId a unique string identifying the client.
+   * @property {number} caretNumber the caret number in range 1-8 (inclusive).
+   * @property {{browser?: string}} clientInfo additional information about the client.
+   */
+
+  /** @type {[Client[], React.Dispatch<React.SetStateAction<Client[]>>]} */
+  const [clients, setClients] = useState([]);
+
+  /**
+   * Store a connecting client.
+   * @param {Client} newClient the connecting client.
+   */
+  const clientConnected = (newClient) => setClients((existingClients) => [...existingClients, newClient]);
+
+  /**
+   * Delete a disconnecting client.
+   * @param {Client} removedClient the disconnecting client.
+   */
+  const clientDisconnected = (removedClient) => setClients((existingClients) => existingClients.filter((client) => client.clientId !== removedClient.clientId));
 
   return (
     <>
@@ -124,7 +150,7 @@ export default function DocumentEdit({ token }) {
            * This setting is optional.
            * @type {(client: Client) => void} client connected callback.
            */
-          rtc_client_connected: (data) => console.log('connected', data),
+          rtc_client_connected: clientConnected,//(data) => console.log('connected', data),
 
           /**
            * The RTC plugin calls this method when a client disconnects.
@@ -133,7 +159,7 @@ export default function DocumentEdit({ token }) {
            * This setting is optional.
            * @type {(client: Client) => void} client disconnected callback.
            */
-          rtc_client_disconnected: (data) => console.log('disconnected', data),
+          rtc_client_disconnected: clientDisconnected,//(data) => console.log('disconnected', data),
 
           /**
            * The RTC plugin transmits this data to all other clients.
