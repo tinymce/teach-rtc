@@ -113,6 +113,24 @@ export default function DocumentEdit({ token }) {
            * @type {(inputs: {userId: string}) => Promise.<{fullName: string}>} user details callback.
            */
           rtc_user_details_provider: getUserDetails,
+
+          /**
+           * The RTC plugin calls this method when a client connects.
+           * This includes the details from the rtc_user_details_provider and
+           * the extra data provided to rtc_client_info.
+           * This setting is optional.
+           * @type {(client: Client) => void} client connected callback.
+           */
+          rtc_client_connected: (data) => console.log('connected', data),
+
+          /**
+           * The RTC plugin calls this method when a client disconnects.
+           * This includes the details from the rtc_user_details_provider and
+           * the extra data provided to rtc_client_info.
+           * This setting is optional.
+           * @type {(client: Client) => void} client disconnected callback.
+           */
+          rtc_client_disconnected: (data) => console.log('disconnected', data),
         }}
       />
     </>
