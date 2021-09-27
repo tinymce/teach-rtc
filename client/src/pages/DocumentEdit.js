@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
-import { getContent, getJwt, getSecretKey, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
+import { getContent, getJwt, getSecretKey, getUserDetails, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -103,6 +103,16 @@ export default function DocumentEdit({ token }) {
            * @type {(inputs: {documentId: string, version: number, getContent: () => string}) => void} content saving callback.
            */
           rtc_snapshot: ({documentId, version, getContent}) => saveContent({documentId, version, content: getContent()}),
+
+          /**
+           * The RTC plugin calls this function when it encounters a new user.
+           * This provides the full name of the user by default but any information
+           * that can be encoded as JSON can be passed.
+           * This setting is optional. If not provided then users will be
+           * identified by their ID.
+           * @type {(inputs: {userId: string}) => Promise.<{fullName: string}>} user details callback.
+           */
+          rtc_user_details_provider: getUserDetails,
         }}
       />
     </>
