@@ -29,6 +29,15 @@
           "$ref":"#/components/schemas/Username"
         },
         "required": true
+      },
+      "KeyHint": {
+        "description": "Request a specific key based on the time it was made.",
+        "in": "query",
+        "name": "keyHint",
+        "schema": {
+          "$ref":"#/components/schemas/KeyHint"
+        },
+        "required": false
       }
     },
     "responses": {
@@ -179,6 +188,16 @@
           }
         }
       },
+      "GetDocumentKeySuccess": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetDocumentKeyResp"
+            }
+          }
+        }
+      },
       "GetDocumentContentSuccess": {
         "description": "Success",
         "content": {
@@ -275,6 +294,16 @@
             }
           }
         }
+      },
+      "KeyUnknown": {
+        "description": "The requested key can not be found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/KeyUnknown"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -323,6 +352,15 @@
         "type": "string",
         "description": "JWT token",
         "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MjM5OTg1MzksImV4cCI6MTYyNDA4NDkzOSwic3ViIjoiam9obi5zbWl0aCJ9.QImDfhGwmH79UU6je7UHzMSLzXZcDml1shCWGZuj0Ovqxv6Y0YZUpj2QNlhzLnBlQq3WMYZe1CZxgSaSq2VSEA9P22iUoOn9THzw9NJnfodEj-MyKvoP8tL2nZmW5SMSttpWVZbwun0JTq4bps0-GcH6hd9FzXUgw_YirQdMEZTYqT3Fmg2pHIt7sJsKCwx2oT2E0yiGCfH8rXDyF7HziVUcJiVNOeNA8Vxz8PMIIGGTQrlgDjRQj_WJcOxypz9HSsaxCwrsZtIp_vBEvsEe_CYEHLQ3riKTitRvUqc4LmkUrW7hGgkzo-y6E8BaTSAQ9pSJ2vW63j6FF70TPRzxZg"
+      },
+      "Key": {
+        "type": "string",
+        "example": "nVCJdUEqX3Lax1xG+jUUy4hWZ1kL2FTGLu2HuiPEz9FalXCCi3sqBK4OCmIqqnK0zFkUmJwrPDWb9imQRKBYL/siSwbAUBft8R12aAH3v5ggq6Mp09qkoC/iMSkyhK+tE4fLESTNiNoJ62FtHfwlZaW5qgt5pvjbpBRJcVT5ILv6/xeSfWkJ7LCJTzHZcG5niVwQbwA35mNrsdi8Zv87pi0/h7aZQy/qDOSLL9u5uRm7e1Nw2JIROdzupJuUsVMu"
+      },
+      "KeyHint": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2021-06-10T07:00:13.366Z"
       },
       "InvalidUsername": {
         "type": "object",
@@ -462,6 +500,19 @@
           }
         },
         "additionalProperties": false
+      },
+      "KeyUnknown": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "The requested key can not be found."
+          }
+        }
       },
       "LoginReq": {
         "type": "object",
@@ -636,6 +687,21 @@
           "title": {
             "type": "string",
             "example": "My document"
+          }
+        }
+      },
+      "GetDocumentKeyResp": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "key": {
+            "$ref":"#/components/schemas/Key"
+          },
+          "keyHint": {
+            "$ref":"#/components/schemas/KeyHint"
           }
         }
       },
@@ -888,6 +954,42 @@
           },
           "403": {
             "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          }
+        }
+      }
+    },
+    "/documents/{documentUuid}/key": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Get the secret key and key hint associated with the document.",
+        "description": "Get the secret key and key hint associated with the document. The secret key is used by RTC to encrypt all content and messages that are sent to the RTC server. This ensures privacy as the RTC server has no way to read or recreate the content of the document. When no key hint is provided the integration is allowed to generate a new key with an associated unique key hint (for example the time of creation), however if a key hint is provided then the key that was originally issued with that hint must be returned.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentUuid"
+          },
+          {
+            "$ref": "#/components/parameters/KeyHint"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetDocumentKeySuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthorizationCheckFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/DocumentUnknownOrForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/KeyUnknown"
           }
         }
       }

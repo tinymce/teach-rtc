@@ -1,6 +1,7 @@
 const router = require("express-promise-router")();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const swaggerUi = require('swagger-ui-express');
 const passport = require('passport');
 const uuidV4 = require('uuid').v4;
@@ -256,6 +257,40 @@ router.get('/documents/:documentUuid/title', isAuthenticated, hasReadPermission,
   const [{ title }] = await req.db.select('title').from('documents').where('uuid', req.params.documentUuid);
   // return the document title
   res.json({ success: true, title });
+});
+
+// get the secret key used to encrypt the document
+router.get('/documents/:documentUuid/key', isAuthenticated, hasReadPermission, async function (req, res, next) {
+  // get the keyHint from the query string, 
+  // the key hint will be the time a key was created in UTC+0
+  const keyHint = req.query.keyHint;
+  // the current time in UTC+0
+  const now = DateTime.utc();
+  // look for an existing key that either is associated with the key hint, or is recently created (within last hour)
+  const rows = await req.db.select('key', 'created').from('keys').where('document', req.params.documentUuid).andWhere((builder) => {
+    if (keyHint) {
+      // when the key hint is provided we require an exact match
+      builder.where('created', '=', keyHint);
+    } else {
+      // otherwise we want a key created in the last hour
+      builder.where('created', '>=', now.minus({hour: 1}).toISO());
+    }
+  }).orderBy('created', 'desc'); // when there are multiple options get the most recent
+  if (rows.length > 0) {
+    // an existing key was found
+    return res.json({success: true, key: rows[0].key, keyHint: rows[0].created});
+  }
+  if (keyHint) {
+    // we could not find an existing key to match the keyHint
+    return res.status(404).json({ success: false, message: 'Could not find the requested key.'});
+  }
+  // randomly generate a new secret key, 
+  // 192 bytes was chosen because when converted to base64 it becomes a string of length 256.
+  const key = crypto.randomBytes(192).toString('base64');
+  // put the new secret key in the database
+  await req.db.insert({ document: req.params.documentUuid, created: now.toISO(), key }).into('keys');
+  // return the new secret key
+  return res.json({ success: true, key, keyHint: now.toISO() });
 });
 
 // get document content
