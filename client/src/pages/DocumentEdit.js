@@ -1,7 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { decode } from 'jsonwebtoken';
 import { useParams } from 'react-router-dom';
-import { getContent, getSecretKey, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
+import { getContent, getJwt, getSecretKey, saveContent, useCollaborators, useDocumentTitle } from '../api/api';
 
 // This is heavily based on the basic example
 // https://www.tiny.cloud/docs/demo/basic-example/
@@ -66,7 +66,7 @@ export default function DocumentEdit({ token }) {
            * This setting is required.
            * @type {(inputs: {documentId: string}) => Promise.<{token: string}>} token provider callback.
            */
-          rtc_token_provider: ({documentId}) => Promise.resolve({token}),
+          rtc_token_provider: getJwt,//({documentId}) => Promise.resolve({token}),
 
           /**
            * To ensure privacy of your content the RTC plugin encrypts all
