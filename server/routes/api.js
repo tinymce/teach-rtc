@@ -156,7 +156,7 @@ router.post('/jwt', async function (req, res, next) {
     return;
   }
   // create a new JSON web token linked to the user that expires in 1 day
-  const token = jwt.sign({}, process.env.PRIVATE_KEY, { subject: username, expiresIn: '1d', algorithm: 'RS256' });
+  const token = jwt.sign({}, process.env.PRIVATE_KEY, { audience: 'Teach RTC', subject: username, expiresIn: '1d', algorithm: 'RS256' });
   res.json({ success: true, token });
 });
 
